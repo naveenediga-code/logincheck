@@ -1464,10 +1464,17 @@ async function adminAction(key,action){
 
 // ── MY SLOT BANNER & COUNTDOWN ──
 function parseSlotDate(key){
-  const [dayKey,timeStr]=key.split('_');
+  // Key can be: YYYY-MM-DD_HHMM or YYYY-MM-DD_HHMM_SupportName
+  // Split on _ — first part is date, second is time
+  const parts=key.split('_');
+  const dayKey=parts[0];   // YYYY-MM-DD
+  const timeStr=parts[1];  // HHMM
+  if(!dayKey||!timeStr) return new Date(0);
   const [yr,mo,dy]=dayKey.split('-').map(Number);
-  const h=parseInt(timeStr.slice(0,2)),m=parseInt(timeStr.slice(2,4));
-  return new Date(yr,mo-1,dy,h,m,0,0); // local time, no UTC offset bug
+  const h=parseInt(timeStr.slice(0,2));
+  const m=parseInt(timeStr.slice(2,4));
+  if(isNaN(yr)||isNaN(h)||isNaN(m)) return new Date(0);
+  return new Date(yr,mo-1,dy,h,m,0,0);
 }
 
 function findMyNextSlot(){
@@ -1475,8 +1482,14 @@ function findMyNextSlot(){
   let nearest=null,nearestMs=Infinity;
   Object.keys(slots).forEach(key=>{
     const b=slots[key];
-    if(b.bookedBy!==currentUser||b.status!=='approved')return; // only approved
-    const slotDate=parseSlotDate(key);
+    // Handle both field name formats
+    const owner=b.bookedBy||b.booked_by||'';
+    if(owner!==currentUser) return;
+    if(b.status!=='approved') return;
+    // Use _key (canonical time key) if present, else parse from storage key
+    const timeKey=b._key||key;
+    const slotDate=parseSlotDate(timeKey);
+    if(slotDate.getTime()===0) return; // invalid date
     const diff=slotDate-now;
     if(diff>0&&diff<nearestMs){nearestMs=diff;nearest={key,b,slotDate,diff};}
   });
