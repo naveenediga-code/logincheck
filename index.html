@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>LoginCheck</title>
+<title>Slot Scheduler</title>
 <meta name="theme-color" content="#1a1a2e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="LoginCheck">
+<meta name="apple-mobile-web-app-title" content="Slot Scheduler">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -62,6 +62,7 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 .idle-banner{display:none;position:fixed;top:0;left:0;right:0;background:#f43f5e;color:#fff;padding:10px 20px;font-size:13px;font-weight:600;text-align:center;z-index:9999;animation:slideDown .3s ease}
 .idle-banner.show{display:block}
 @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);z-index:100}
@@ -218,10 +219,25 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 <!-- LOGIN PAGE -->
 <div class="page active" id="loginPage">
   <div class="login-left">
-    <div class="brand"><div class="brand-name">Login<span>Check</span></div><div class="brand-tag">Identity Verification</div></div>
+    <div class="brand">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="12" fill="#6366f1"/>
+          <rect x="8" y="12" width="24" height="3" rx="1.5" fill="white"/>
+          <rect x="8" y="19" width="16" height="3" rx="1.5" fill="#a5b4fc"/>
+          <rect x="8" y="26" width="20" height="3" rx="1.5" fill="#c7d2fe"/>
+          <circle cx="30" cy="27" r="6" fill="#10b981"/>
+          <path d="M27 27l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div class="brand-name">Slot<span>Scheduler</span></div>
+          <div class="brand-tag">Interview Booking Portal</div>
+        </div>
+      </div>
+    </div>
     <div class="left-body">
-      <div class="left-headline">Verify.<br><em>Access.</em><br>Proceed.</div>
-      <div class="left-sub">Secure portal with interview slot booking. Only authorized users may enter.</div>
+      <div class="left-headline">Book.<br><em>Prepare.</em><br>Succeed.</div>
+      <div class="left-sub">Schedule your interview slots with ease. Manage bookings, track approvals, and never miss your window.</div>
     </div>
     <div class="left-footer">© 2026 LoginCheck · All rights reserved</div>
   </div>
@@ -254,7 +270,17 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 <!-- HOME PAGE -->
 <div class="page" id="homePage">
   <nav class="navbar">
-    <div class="nav-brand">Login<span>Check</span></div>
+    <div class="nav-brand" style="display:flex;align-items:center;gap:8px">
+      <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="12" fill="#6366f1"/>
+        <rect x="8" y="12" width="24" height="3" rx="1.5" fill="white"/>
+        <rect x="8" y="19" width="16" height="3" rx="1.5" fill="#a5b4fc"/>
+        <rect x="8" y="26" width="20" height="3" rx="1.5" fill="#c7d2fe"/>
+        <circle cx="30" cy="27" r="6" fill="#10b981"/>
+        <path d="M27 27l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Slot<span>Scheduler</span>
+    </div>
     <div class="nav-right">
       <div class="nav-info"><div class="nav-name" id="navName"></div><div class="nav-last" id="navLast"></div></div>
       <div class="nav-avatar" id="navAvatar">?</div>
@@ -265,29 +291,14 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 
   <div class="home-body">
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="sc-label">Logged in as</div>
-        <div class="sc-val" id="scUser" style="font-size:16px">—</div>
-        <div class="sc-sub" id="scRole">User</div>
-      </div>
-      <div class="stat-card">
-        <div class="sc-label">Last login</div>
-        <div class="sc-val" id="scLastLogin" style="font-size:15px">—</div>
-        <div class="sc-sub">Previous session</div>
-      </div>
-      <div class="stat-card">
-        <div class="sc-label">My next slot in</div>
-        <div class="sc-val countdown-val" id="scCountdown">—</div>
-        <div class="sc-sub" id="scCountdownSub">No approved slot</div>
-      </div>
-      <div class="stat-card" id="idleStatCard" style="display:none">
-        <div class="sc-label">Idle logout in</div>
-        <div class="sc-val" id="scIdle" style="color:#94a3b8">2:00</div>
-        <div class="sc-sub">Resets on activity</div>
-      </div>
-    </div>
+    <!-- hidden stat refs still needed by JS -->
+    <span id="scUser" style="display:none"></span>
+    <span id="scRole" style="display:none"></span>
+    <span id="scLastLogin" style="display:none"></span>
+    <span id="scCountdown" style="display:none"></span>
+    <span id="scCountdownSub" style="display:none"></span>
+    <span id="idleStatCard" style="display:none"></span>
+    <span id="scIdle" style="display:none"></span>
 
     <!-- My slot banner -->
     <div class="my-slot-banner" id="mySlotBanner">
@@ -295,6 +306,7 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
         <div class="msb-label">Your interview slot</div>
         <div class="msb-time" id="msbTime">—</div>
         <div class="msb-sub" id="msbSub">—</div>
+        <div class="msb-allbest" id="msbAllBest" style="display:none;margin-top:8px;font-size:13px;font-weight:700;letter-spacing:.05em;color:#fde68a">🎯 All the best for your interview!</div>
       </div>
       <div class="msb-right">
         <div class="msb-cd" id="msbCd">—</div>
@@ -446,6 +458,18 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
   <div class="modal-actions" style="margin-top:20px">
     <button class="modal-btn-outline" onclick="closeModal()">Cancel</button>
     <button class="modal-btn-danger" onclick="confirmDelete()" style="flex:1;padding:12px;border-radius:10px">Yes, delete</button>
+  </div>
+</div>
+
+<!-- NOTIFICATION TOAST -->
+<div id="notifToast" style="display:none;position:fixed;top:20px;right:20px;z-index:9999;min-width:280px;max-width:340px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:14px 16px;animation:slideInRight .3s ease;border-left:4px solid #6366f1">
+  <div style="display:flex;align-items:flex-start;gap:10px">
+    <div id="notifIcon" style="font-size:20px;flex-shrink:0;line-height:1.2">🔔</div>
+    <div style="flex:1">
+      <div id="notifTitle" style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#0f172a;margin-bottom:2px"></div>
+      <div id="notifMsg" style="font-size:12px;color:#64748b;line-height:1.5"></div>
+    </div>
+    <button onclick="hideNotif()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;line-height:1;padding:0;flex-shrink:0">×</button>
   </div>
 </div>
 
@@ -618,6 +642,8 @@ function showHome(prevLogin){
   renderMySlotBanner();
   startCountdown();
   startIdleTimer();
+  // Check if user has any approved/rejected slots and notify
+  setTimeout(()=>checkSlotNotifications(),800);
 }
 
 function doLogout(){
@@ -707,28 +733,43 @@ function buildDayTabs(){
   renderSlots();
 }
 
-// ── SLOT OVERLAP BLOCKING ──
-// Returns set of slot keys that are blocked due to a booking's duration
-function getBlockedKeys(){
+// ── SLOT OVERLAP BLOCKING (per support person) ──
+// Returns Map<slotKey, Set<supportPerson>> — which support persons are busy in each slot
+function getBlockedBySupport(){
   const slots=getSlots();
-  const blocked=new Set();
+  const blocked=new Map(); // key -> Set of busy support persons
   Object.keys(slots).forEach(key=>{
     const b=slots[key];
-    if(b.status==='rejected')return; // rejected slots free up the time
+    if(b.status==='rejected')return; // rejected frees up
     const [dayKey,timeStr]=key.split('_');
     const startH=parseInt(timeStr.slice(0,2)), startM=parseInt(timeStr.slice(2,4));
     const startTotal=startH*60+startM;
     const endTotal=startTotal+parseInt(b.duration);
-    // block all 30-min slots that overlap [startTotal, endTotal)
-    // The booking occupies [startTotal, endTotal)
-    // A slot starting at t is blocked if t >= startTotal && t < endTotal
+    // Mark support person as busy for all overlapping 30-min slots
     for(let t=startTotal+30;t<endTotal;t+=30){
       const bh=Math.floor(t/60), bm=t%60;
       const bKey=`${dayKey}_${String(bh).padStart(2,'0')}${String(bm).padStart(2,'0')}`;
-      blocked.add(bKey);
+      if(!blocked.has(bKey)) blocked.set(bKey, new Set());
+      blocked.get(bKey).add(b.support);
     }
   });
   return blocked;
+}
+
+const ALL_SUPPORT=['Sumanth','Surya','Veer','Sunil','Raghuveer'];
+
+// A slot key is "fully blocked" only if ALL support persons are busy there
+function isFullyBlocked(key, blockedMap){
+  if(!blockedMap.has(key)) return false;
+  const busy=blockedMap.get(key);
+  return ALL_SUPPORT.every(s=>busy.has(s));
+}
+
+// Returns which support persons are still free for a given slot key
+function getFreeSupport(key, blockedMap){
+  if(!blockedMap.has(key)) return ALL_SUPPORT.slice();
+  const busy=blockedMap.get(key);
+  return ALL_SUPPORT.filter(s=>!busy.has(s));
 }
 
 function generateSlots(dayKey){
@@ -748,7 +789,7 @@ function renderSlots(){
   const grid=document.getElementById('slotsGrid');
   const title=document.getElementById('slotsTitle');
   const allSlots=getSlots();
-  const blocked=getBlockedKeys();
+  const blockedMap=getBlockedBySupport();
   const daySlots=generateSlots(selectedDay);
   const dayObj=getDays().find(d=>d.key===selectedDay);
   title.textContent=`Slots — ${dayObj?dayObj.label+' ('+dayObj.sub+')':''}`;
@@ -756,7 +797,9 @@ function renderSlots(){
 
   daySlots.forEach(s=>{
     const booking=allSlots[s.key];
-    const isBlocked=!booking&&blocked.has(s.key);
+    const isFullBlocked=!booking&&isFullyBlocked(s.key, blockedMap);
+    const isPartialBlocked=!booking&&!isFullBlocked&&blockedMap.has(s.key);
+    const isBlocked=isFullBlocked; // only truly blocked if ALL support persons busy
     const isBooked=!!booking;
     const isMine=isBooked&&booking.bookedBy===currentUser;
     const card=document.createElement('div');
@@ -768,7 +811,12 @@ function renderSlots(){
 
     if(isBlocked){
       cls+='blocked';
-      statusHTML=`<div class="slot-status" style="color:#94a3b8"><span class="slot-dot" style="background:#cbd5e1"></span>Blocked</div>`;
+      statusHTML=`<div class="slot-status" style="color:#94a3b8"><span class="slot-dot" style="background:#cbd5e1"></span>All busy</div>`;
+    } else if(isPartialBlocked){
+      cls+='free'; // still bookable
+      const free=getFreeSupport(s.key, blockedMap);
+      statusHTML=`<div class="slot-status" style="color:#f59e0b"><span class="slot-dot" style="background:#f59e0b"></span>Partially available</div>`;
+      infoHTML+=`<div class="slot-info" style="color:#92400e;font-size:10px">Free: ${free.join(', ')}</div>`;
     } else if(!isBooked){
       cls+='free';
       statusHTML=`<div class="slot-status" style="color:#10b981"><span class="slot-dot" style="background:#10b981"></span>Available</div>`;
@@ -791,7 +839,7 @@ function renderSlots(){
     card.className=cls;
     card.innerHTML=`${deleteBtn}<div class="slot-time">${s.time}</div><div class="slot-dur-label">30 min slot</div>${statusHTML}${infoHTML}`;
 
-    if(!isBooked&&!isBlocked) card.onclick=()=>openBookingModal(s);
+    if(!isBooked&&!isBlocked) card.onclick=()=>openBookingModal(s, blockedMap);
     else if(isBooked) card.onclick=()=>openViewModal(s.key);
 
     grid.appendChild(card);
@@ -799,12 +847,25 @@ function renderSlots(){
 }
 
 // ── BOOKING ──
-function openBookingModal(slot){
+function openBookingModal(slot, blockedMap){
   pendingSlotKey=slot.key;
   document.getElementById('bm-title').textContent='Request slot';
   document.getElementById('bm-sub').textContent=`${slot.time} · ${getDays().find(d=>d.key===slot.dayKey)?.label||slot.dayKey}`;
-  ['bm-company','bm-round','bm-support'].forEach(id=>{ const el=document.getElementById(id); el.tagName==='SELECT'?el.value='':el.value=''; });
+  document.getElementById('bm-company').value='';
+  document.getElementById('bm-round').value='';
   document.getElementById('bm-duration').value='90';
+  // Rebuild support dropdown — only show free support persons for this slot
+  const freeSupport = blockedMap ? getFreeSupport(slot.key, blockedMap) : ALL_SUPPORT.slice();
+  const sel=document.getElementById('bm-support');
+  sel.innerHTML='<option value="">Select support person</option>';
+  freeSupport.forEach(name=>{
+    const opt=document.createElement('option');
+    opt.value=name; opt.textContent=name;
+    sel.appendChild(opt);
+  });
+  if(freeSupport.length===0){
+    sel.innerHTML='<option value="">No support persons available</option>';
+  }
   showModalOnly('bookingModal');
 }
 
@@ -815,16 +876,25 @@ function confirmBooking(){
   const duration=parseInt(document.getElementById('bm-duration').value);
   if(!company||!round||!support){alert('Please fill in all fields.');return;}
   const slots=getSlots();
-  const blocked=getBlockedKeys();
-  if(slots[pendingSlotKey]||blocked.has(pendingSlotKey)){alert('This slot is no longer available. Please choose another.');closeModal();renderSlots();return;}
-  // Also check that the duration doesn't overlap an existing slot
+  const blockedMap=getBlockedBySupport();
+  // Check if this exact slot key is already taken
+  if(slots[pendingSlotKey]){alert('This slot was just taken. Please choose another.');closeModal();renderSlots();return;}
+  // Check if chosen support person is free for the full duration window
   const [dayKey,timeStr]=pendingSlotKey.split('_');
   const startH=parseInt(timeStr.slice(0,2)),startM=parseInt(timeStr.slice(2,4));
   const startTotal=startH*60+startM, endTotal=startTotal+duration;
   for(let t=startTotal+30;t<endTotal;t+=30){
     const bh=Math.floor(t/60),bm=t%60;
     const chk=`${dayKey}_${String(bh).padStart(2,'0')}${String(bm).padStart(2,'0')}`;
-    if(slots[chk]&&slots[chk].status!=='rejected'){alert('Your selected duration overlaps an existing booking. Please choose a shorter duration or different slot.');return;}
+    // Block if: this sub-slot is directly booked, OR the chosen support person is busy there
+    const directlyBooked=slots[chk]&&slots[chk].status!=='rejected';
+    const supportBusy=blockedMap.has(chk)&&blockedMap.get(chk).has(support);
+    if(directlyBooked&&slots[chk]&&slots[chk].support===support){
+      alert(`${support} is already booked during this duration window. Please choose a different support person or time slot.`);return;
+    }
+    if(supportBusy){
+      alert(`${support} is busy during this time window. Please select a different support person or shorter duration.`);return;
+    }
   }
   slots[pendingSlotKey]={bookedBy:currentUser,company,round,support,duration,status:'pending',bookedAt:new Date().toISOString()};
   saveSlots(slots);
@@ -912,6 +982,46 @@ function renderAdminSection(){
   });
 }
 
+function checkSlotNotifications(){
+  if(!currentUser||currentIsAdmin)return;
+  const slots=getSlots();
+  const notifKey='lc_notif_'+currentUser;
+  const seen=JSON.parse(localStorage.getItem(notifKey)||'{}');
+  let approvedCount=0,rejectedCount=0;
+  Object.keys(slots).forEach(key=>{
+    const b=slots[key];
+    if(b.bookedBy!==currentUser)return;
+    if(b.status==='approved'&&!seen[key+'_approved']){
+      approvedCount++;seen[key+'_approved']=true;
+    }
+    if(b.status==='rejected'&&!seen[key+'_rejected']){
+      rejectedCount++;seen[key+'_rejected']=true;
+    }
+  });
+  localStorage.setItem(notifKey,JSON.stringify(seen));
+  if(approvedCount>0&&rejectedCount===0){
+    showNotif('Slot Approved! 🎉',approvedCount+' of your slot(s) have been approved. All the best for your interview!','approved');
+  } else if(rejectedCount>0&&approvedCount===0){
+    showNotif('Slot Rejected',rejectedCount+' of your slot(s) were rejected. Please book a new slot.','rejected');
+  } else if(approvedCount>0&&rejectedCount>0){
+    showNotif('Slot Update',approvedCount+' approved, '+rejectedCount+' rejected. Check your bookings.','info');
+  }
+}
+
+function showNotif(title, msg, type){
+  const toast=document.getElementById('notifToast');
+  document.getElementById('notifTitle').textContent=title;
+  document.getElementById('notifMsg').textContent=msg;
+  const colors={approved:'#10b981',rejected:'#f43f5e',info:'#6366f1',warning:'#f59e0b'};
+  const icons={approved:'✅',rejected:'❌',info:'🔔',warning:'⚠️'};
+  toast.style.borderLeftColor=colors[type]||colors.info;
+  document.getElementById('notifIcon').textContent=icons[type]||icons.info;
+  toast.style.display='block';
+  if(window._notifTimer) clearTimeout(window._notifTimer);
+  window._notifTimer=setTimeout(hideNotif,5000);
+}
+function hideNotif(){ document.getElementById('notifToast').style.display='none'; }
+
 function adminAction(key,action){
   const slots=getSlots();
   if(!slots[key])return;
@@ -921,6 +1031,16 @@ function adminAction(key,action){
   renderSlots();
   renderMySlotBanner();
   startCountdown();
+  // Notify admin of action
+  const b=slots[key];
+  const [dayKey,timeStr]=key.split('_');
+  const h=parseInt(timeStr.slice(0,2)),m=parseInt(timeStr.slice(2,4));
+  const timeLabel=fmtTime(h,m);
+  if(action==='approved'){
+    showNotif('Slot Approved','Booking for '+b.company+' ('+timeLabel+') has been approved.','approved');
+  } else {
+    showNotif('Slot Rejected','Booking for '+b.company+' ('+timeLabel+') has been rejected.','rejected');
+  }
 }
 
 // ── MY SLOT BANNER & COUNTDOWN ──
@@ -955,6 +1075,8 @@ function renderMySlotBanner(){
   document.getElementById('msbTime').textContent=`${fmtTime(h,m)} — ${dayObj?dayObj.label+' '+dayObj.sub:dayKey}`;
   document.getElementById('msbSub').textContent=`${next.b.company} · ${next.b.round} · ${next.b.support}`;
   document.getElementById('msbStatus').innerHTML=statusBadge(next.b.status||'pending');
+  const allBest=document.getElementById('msbAllBest');
+  if(allBest) allBest.style.display=(next.b.status==='approved')?'block':'none';
 }
 
 function startCountdown(){
