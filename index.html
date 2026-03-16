@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-title" content="Slot Scheduler">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -593,46 +595,23 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 // admin / admin (admin user)
 // DADDY / tell  (user)
 // MOMMY / happy (user)
-// ── BUILT-IN USERS (fallback if localStorage empty) ──
-const BUILTIN_USERS = {
-  ADMIN: { hash:'8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', isAdmin:true  },
-  DADDY: { hash:'879915cfdc2cb4852ed05241911d8de5ca6e2cc4085746c14f13ad304157e264', isAdmin:false },
-  MOMMY: { hash:'489f719cadf919094ddb38e7654de153ac33c02febb5de91e5345cbe372cf4a0', isAdmin:false }
+// ══════════════════════════════════════════════
+// SUPABASE CONFIG — replace with your own values
+// Go to supabase.com → your project → Settings → API
+// ══════════════════════════════════════════════
+const SUPABASE_URL  = 'https://pqudmfkivqbwsxxfjafy.supabase.co';   // e.g. https://xxxx.supabase.co
+const SUPABASE_ANON = 'sb_publishable_agMQ6s-CNrNH8Jxgk7OlpQ_enj6Y8F0'; // starts with eyJ...
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── IN-MEMORY CACHE (synced from Supabase) ──
+// Avoids hitting the DB on every render
+let _cache = {
+  users: null,        // { USERNAME: { hash, is_admin } }
+  support: null,      // ['Sumanth', ...]
+  slots: null,        // { bookingId: { ...booking } }
+  lastLogins: null    // { USERNAME: isoString }
 };
-const SECURITY = {
-  ADMIN:{ question:'What is your admin secret word?', hash:'8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918' },
-  DADDY:{ question:'What is your favourite colour?',  hash:'16477688c0e00699c6cfa4497a3612d7e83c532062b64b250fed8908128ed548' },
-  MOMMY:{ question:'What city were you born in?',     hash:'6089854c94ca5454b76be6752c562901a985f64c9a946f62976aeab593b83161' }
-};
-
-// ── DYNAMIC USER STORE (localStorage) ──
-function getDynUsers(){
-  try{ return JSON.parse(localStorage.getItem('lc_users')||'null'); }catch{return null;}
-}
-function saveDynUsers(u){ localStorage.setItem('lc_users',JSON.stringify(u)); }
-function getUsers(){
-  const dyn=getDynUsers();
-  return dyn || JSON.parse(JSON.stringify(BUILTIN_USERS));
-}
-function initUsersIfNeeded(){
-  if(!getDynUsers()) saveDynUsers(JSON.parse(JSON.stringify(BUILTIN_USERS)));
-}
-
-// ── DYNAMIC SUPPORT LIST ──
-function getSupportList(){
-  try{ return JSON.parse(localStorage.getItem('lc_support')||'null'); }catch{return null;}
-}
-function saveSupportList(s){ localStorage.setItem('lc_support',JSON.stringify(s)); }
-function getAllSupport(){
-  return getSupportList() || ['Sumanth','Surya','Veer','Sunil','Raghuveer'];
-}
-function initSupportIfNeeded(){
-  if(!getSupportList()) saveSupportList(['Sumanth','Surya','Veer','Sunil','Raghuveer']);
-}
-
-// Runtime password overrides persisted in sessionStorage
-function getRuntimePwd(){ try{ return JSON.parse(sessionStorage.getItem('lc_rpwd')||'{}'); }catch{return{};} }
-function setRuntimePwd(u,h){ const d=getRuntimePwd(); d[u]=h; sessionStorage.setItem('lc_rpwd',JSON.stringify(d)); }
 
 // ── STATE ──
 let currentUser = null;
@@ -644,17 +623,159 @@ let countdownTimer = null;
 let idleTimer = null;
 let idleWarningTimer = null;
 let idleRemaining = 120;
-const IDLE_TIMEOUT = 120; // 2 minutes
-const IDLE_WARNING = 60;  // warn at 60s remaining
+const IDLE_TIMEOUT = 120;
+const IDLE_WARNING = 60;
 
-// ── STORAGE ──
-function getSlots(){ try{return JSON.parse(localStorage.getItem('lc_slots')||'{}');}catch{return{};} }
-function saveSlots(s){ localStorage.setItem('lc_slots',JSON.stringify(s)); }
-function getLastLogins(){ try{return JSON.parse(localStorage.getItem('lc_lastlogin')||'{}');}catch{return{};} }
-function saveLastLogin(u,t){ const d=getLastLogins(); d[u]=t; localStorage.setItem('lc_lastlogin',JSON.stringify(d)); }
+// ── SESSION (sessionStorage — stays on refresh, clears on tab close) ──
 function getSession(){ try{return JSON.parse(sessionStorage.getItem('lc_session')||'null');}catch{return null;} }
 function saveSession(u){ sessionStorage.setItem('lc_session',JSON.stringify({user:u,time:Date.now()})); }
 function clearSession(){ sessionStorage.removeItem('lc_session'); }
+
+// ── SUPABASE DATA FUNCTIONS ──
+
+async function loadAllData(){
+  showLoader(true);
+  try {
+    // Load users
+    const {data:users,error:ue}=await sb.from('users').select('*');
+    if(ue) throw ue;
+    _cache.users={};
+    users.forEach(u=>{ _cache.users[u.username]={hash:u.password_hash,is_admin:u.is_admin,last_login:u.last_login}; });
+
+    // Load support persons
+    const {data:sp,error:se}=await sb.from('support_persons').select('name').order('id');
+    if(se) throw se;
+    _cache.support=sp.map(s=>s.name);
+
+    // Load bookings
+    const {data:bk,error:be}=await sb.from('bookings').select('*');
+    if(be) throw be;
+    _cache.slots={};
+    bk.forEach(b=>{
+      _cache.slots[b.id]={
+        _key:b.time_key, bookedBy:b.booked_by, company:b.company,
+        round:b.round, support:b.support, duration:b.duration,
+        status:b.status, bookedAt:b.booked_at
+      };
+    });
+  } catch(err){
+    console.error('Supabase load error:',err);
+    showError('Could not connect to database. Check your Supabase config.');
+  }
+  showLoader(false);
+}
+
+function showLoader(on){
+  let el=document.getElementById('appLoader');
+  if(!el){
+    el=document.createElement('div');
+    el.id='appLoader';
+    el.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.7);display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;font-family:Syne,sans-serif;font-size:16px;gap:12px';
+    el.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Loading...';
+    document.body.appendChild(el);
+    const style=document.createElement('style');
+    style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(style);
+  }
+  el.style.display=on?'flex':'none';
+}
+
+function showError(msg){
+  let el=document.getElementById('appError');
+  if(!el){
+    el=document.createElement('div');
+    el.id='appError';
+    el.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff1f2;border:1px solid #fecdd3;border-left:4px solid #f43f5e;border-radius:10px;padding:14px 20px;font-size:13px;color:#be123c;z-index:9999;max-width:420px;text-align:center;font-family:Inter,sans-serif';
+    document.body.appendChild(el);
+  }
+  el.textContent='⚠️ '+msg;
+  el.style.display='block';
+  setTimeout(()=>{if(el)el.style.display='none';},6000);
+}
+
+// ── GETTERS (use cache) ──
+function getUsers(){ return _cache.users||{}; }
+function getAllSupport(){ return _cache.support||[]; }
+function getSlots(){ return _cache.slots||{}; }
+function getLastLogins(){
+  const ll={};
+  Object.keys(getUsers()).forEach(u=>{ if(getUsers()[u].last_login) ll[u]=getUsers()[u].last_login; });
+  return ll;
+}
+
+// ── SAVERS (write to Supabase + update cache) ──
+async function saveLastLogin(u,t){
+  _cache.users[u]={..._cache.users[u],last_login:t};
+  await sb.from('users').update({last_login:t}).eq('username',u);
+}
+
+async function saveSlots(s){
+  // This is called after local mutation — we just use it as a signal to re-render
+  // Actual DB writes happen in confirmBooking, confirmDelete, adminAction
+  _cache.slots=s;
+}
+
+// Runtime pwd (session only — for password reset within same session)
+function getRuntimePwd(){ try{return JSON.parse(sessionStorage.getItem('lc_rpwd')||'{}');}catch{return{};} }
+function setRuntimePwd(u,h){ const d=getRuntimePwd(); d[u]=h; sessionStorage.setItem('lc_rpwd',JSON.stringify(d)); }
+
+async function saveDynUsers(users){
+  // Update cache
+  _cache.users=users;
+}
+
+async function saveSupportList(list){
+  _cache.support=list;
+}
+
+function initUsersIfNeeded(){}
+function initSupportIfNeeded(){}
+
+// ── REALTIME SUBSCRIPTIONS ──
+// Listen for changes from other users and refresh automatically
+function subscribeRealtime(){
+  sb.channel('realtime-all')
+    .on('postgres_changes',{event:'*',schema:'public',table:'bookings'},()=>{
+      refreshSlots();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'users'},()=>{
+      refreshUsers();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'support_persons'},()=>{
+      refreshSupport();
+    })
+    .subscribe();
+}
+
+async function refreshSlots(){
+  const {data:bk}=await sb.from('bookings').select('*');
+  if(!bk)return;
+  _cache.slots={};
+  bk.forEach(b=>{
+    _cache.slots[b.id]={
+      _key:b.time_key,bookedBy:b.booked_by,company:b.company,
+      round:b.round,support:b.support,duration:b.duration,
+      status:b.status,bookedAt:b.booked_at
+    };
+  });
+  renderSlots();
+  renderAdminSection();
+  renderMySlotBanner();
+  startCountdown();
+}
+
+async function refreshUsers(){
+  const {data:users}=await sb.from('users').select('*');
+  if(!users)return;
+  _cache.users={};
+  users.forEach(u=>{ _cache.users[u.username]={hash:u.password_hash,is_admin:u.is_admin,last_login:u.last_login}; });
+}
+
+async function refreshSupport(){
+  const {data:sp}=await sb.from('support_persons').select('name').order('id');
+  if(!sp)return;
+  _cache.support=sp.map(s=>s.name);
+}
 
 // ── HELPERS ──
 const CAPS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -737,7 +858,7 @@ async function doLogin(){
   btn.textContent='Verifying...';btn.disabled=true;
   const hashed=await sha256(p);
   const rp=getRuntimePwd();
-  const USERS=getUsers();
+  // users loaded from cache
   const expected=rp[u]||(USERS[u]&&USERS[u].hash);
   if(expected&&expected===hashed){
     const lastLogins=getLastLogins();
@@ -745,7 +866,7 @@ async function doLogin(){
     saveLastLogin(u,new Date().toISOString());
     saveSession(u);
     currentUser=u;
-    currentIsAdmin=getUsers()[u].isAdmin;
+    currentIsAdmin=getUsers()[u].is_admin||false;
     document.getElementById('authError').classList.remove('show');
     showHome(prevLogin);
   } else {
@@ -825,17 +946,22 @@ function stopIdleTimer(){ if(idleTimer){clearInterval(idleTimer);idleTimer=null;
 });
 
 // ── PERSIST SESSION ──
-window.addEventListener('load',()=>{
-  initUsersIfNeeded();
-  initSupportIfNeeded();
+window.addEventListener('load',async()=>{
   const sess=getSession();
-  if(sess&&getUsers()[sess.user]){
-    const lastLogins=getLastLogins();
-    const prevLogin=lastLogins[sess.user]||null;
-    currentUser=sess.user;
-    currentIsAdmin=getUsers()[sess.user].isAdmin;
-    showHome(prevLogin);
+  if(sess){
+    // User has an active session — load data and restore
+    await loadAllData();
+    const users=getUsers();
+    if(users[sess.user]){
+      currentUser=sess.user;
+      currentIsAdmin=users[sess.user].is_admin||false;
+      const prevLogin=users[sess.user].last_login||null;
+      subscribeRealtime();
+      showHome(prevLogin);
+      return;
+    }
   }
+  // No session — show login page (already default)
 });
 
 // ── DAYS ──
@@ -1074,8 +1200,15 @@ function confirmBooking(){
   const bookingKey=`${pendingSlotKey}_${support.replace(/\s+/g,'_')}`;
   if(slots[bookingKey]){alert('This booking already exists.');return;}
 
+  // Save to Supabase
+  const {error:insertErr}=await sb.from('bookings').insert({
+    id:bookingKey, time_key:pendingSlotKey,
+    booked_by:currentUser, company, round, support, duration, status:'pending'
+  });
+  if(insertErr){ alert('Booking failed: '+insertErr.message); return; }
+  // Update local cache
   slots[bookingKey]={_key:pendingSlotKey,bookedBy:currentUser,company,round,support,duration,status:'pending',bookedAt:new Date().toISOString()};
-  saveSlots(slots);
+  _cache.slots=slots;
   closeModal();renderSlots();renderAdminSection();renderMySlotBanner();startCountdown();
 }
 
@@ -1123,7 +1256,9 @@ function openDeleteModal(key){
 }
 function confirmDelete(){
   if(!pendingDeleteKey)return;
-  const slots=getSlots();delete slots[pendingDeleteKey];saveSlots(slots);
+  const {error:delErr}=await sb.from('bookings').delete().eq('id',pendingDeleteKey);
+  if(delErr){ alert('Delete failed: '+delErr.message); return; }
+  const slots=getSlots();delete slots[pendingDeleteKey];_cache.slots=slots;
   pendingDeleteKey=null;closeModal();renderSlots();renderAdminSection();renderMySlotBanner();startCountdown();
 }
 
@@ -1205,11 +1340,13 @@ function showNotif(title, msg, type){
 }
 function hideNotif(){ document.getElementById('notifToast').style.display='none'; }
 
-function adminAction(key,action){
+async function adminAction(key,action){
+  const {error}=await sb.from('bookings').update({status:action}).eq('id',key);
+  if(error){alert('Update failed: '+error.message);return;}
   const slots=getSlots();
   if(!slots[key])return;
   slots[key].status=action;
-  saveSlots(slots);
+  _cache.slots=slots;
   renderAdminSection();
   renderSlots();
   renderMySlotBanner();
@@ -1445,9 +1582,15 @@ async function confirmCreateUser(){
     return;
   }
   const hashed=await sha256(p);
+  const {error:insertErr}=await sb.from('users').insert({username:u,password_hash:hashed,is_admin:role==='admin'});
+  if(insertErr){
+    document.getElementById('cum-error-msg').textContent=insertErr.message;
+    document.getElementById('cum-error').classList.add('show');
+    return;
+  }
   const users=getUsers();
-  users[u]={hash:hashed,isAdmin:role==='admin'};
-  saveDynUsers(users);
+  users[u]={hash:hashed,is_admin:role==='admin'};
+  _cache.users=users;
   closeModal();
   renderUsersTable();
   showNotif('User created','User "'+u+'" has been created successfully.','approved');
@@ -1478,11 +1621,11 @@ function handleEupPassword(inp){
 async function confirmEditUserPwd(){
   const p=document.getElementById('eup-password').value;
   const hashed=await sha256(p);
+  const {error}=await sb.from('users').update({password_hash:hashed}).eq('username',editingUser);
+  if(error){alert('Update failed: '+error.message);return;}
   const users=getUsers();
-  if(!users[editingUser])return;
-  users[editingUser].hash=hashed;
-  saveDynUsers(users);
-  // also clear any runtime override
+  if(users[editingUser]) users[editingUser].hash=hashed;
+  _cache.users=users;
   const rp=getRuntimePwd();
   delete rp[editingUser];
   sessionStorage.setItem('lc_rpwd',JSON.stringify(rp));
@@ -1499,9 +1642,11 @@ function openDeleteUserModal(u){
 
 function confirmDeleteUser(){
   if(!pendingDeleteUser)return;
+  const {error}=await sb.from('users').delete().eq('username',pendingDeleteUser);
+  if(error){alert('Delete failed: '+error.message);return;}
   const users=getUsers();
   delete users[pendingDeleteUser];
-  saveDynUsers(users);
+  _cache.users=users;
   pendingDeleteUser=null;
   closeModal();
   renderUsersTable();
@@ -1533,8 +1678,10 @@ function deleteSupport(idx){
   const list=getAllSupport();
   const name=list[idx];
   if(!confirm('Remove "'+name+'" from the support persons list?'))return;
+  const {error}=await sb.from('support_persons').delete().eq('name',name);
+  if(error){alert('Delete failed: '+error.message);return;}
   list.splice(idx,1);
-  saveSupportList(list);
+  _cache.support=list;
   renderSupportList();
   showNotif('Support person removed','"'+name+'" removed from the list.','warning');
 }
@@ -1575,8 +1722,13 @@ function confirmAddSupport(){
   }
   // Capitalize first letter of each word
   const formatted=name.replace(/\w/g,c=>c.toUpperCase());
+  const {error}=await sb.from('support_persons').insert({name:formatted});
+  if(error){
+    document.getElementById('asp-error').classList.add('show');
+    return;
+  }
   list.push(formatted);
-  saveSupportList(list);
+  _cache.support=list;
   closeModal();
   renderSupportList();
   showNotif('Support person added','"'+formatted+'" added to the support persons list.','approved');
