@@ -293,14 +293,28 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 
   <div class="home-body">
 
-    <!-- hidden stat refs still needed by JS -->
+    <!-- hidden refs still needed by JS -->
     <span id="scUser" style="display:none"></span>
     <span id="scRole" style="display:none"></span>
     <span id="scLastLogin" style="display:none"></span>
-    <span id="scCountdown" style="display:none"></span>
-    <span id="scCountdownSub" style="display:none"></span>
-    <span id="idleStatCard" style="display:none"></span>
     <span id="scIdle" style="display:none"></span>
+    <span id="idleStatCard" style="display:none"></span>
+
+    <!-- Countdown bar — shown when user has an approved slot -->
+    <div id="countdownBar" style="display:none;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 20px;margin-bottom:20px;display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">⏱</div>
+        <div>
+          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:2px">Next interview slot</div>
+          <div id="cbarSlotInfo" style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#0f172a">—</div>
+          <div id="cbarDetails" style="font-size:12px;color:#64748b;margin-top:1px">—</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div id="scCountdown" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#6366f1;line-height:1">—</div>
+        <div id="scCountdownSub" style="font-size:11px;color:#94a3b8;margin-top:2px">Time remaining</div>
+      </div>
+    </div>
 
     <!-- My slot banner -->
     <div class="my-slot-banner" id="mySlotBanner">
@@ -1472,18 +1486,39 @@ function findMyNextSlot(){
 function renderMySlotBanner(){
   const next=findMyNextSlot();
   const banner=document.getElementById('mySlotBanner');
-  if(!next){banner.classList.remove('show');return;}
-  banner.classList.add('show');
+  const cbar=document.getElementById('countdownBar');
+
+  if(!next){
+    banner.classList.remove('show');
+    if(cbar) cbar.style.display='none';
+    return;
+  }
+
+  // Parse time key properly — key format is YYYY-MM-DD_HHMM_SupportName
   const bannerTimeKey=next.b._key||next.key;
   const btp=bannerTimeKey.split('_');
   const dayKey=btp[0], timeStr=btp[1]||'0000';
   const h=parseInt(timeStr.slice(0,2)),m=parseInt(timeStr.slice(2,4));
   const dayObj=getDays().find(d=>d.key===dayKey);
-  document.getElementById('msbTime').textContent=`${fmtTime(h,m)} — ${dayObj?dayObj.label+' '+dayObj.sub:dayKey}`;
+  const timeLabel=fmtTime(h,m);
+  const dayLabel=dayObj?dayObj.label+' '+dayObj.sub:dayKey;
+
+  // Update purple banner
+  banner.classList.add('show');
+  document.getElementById('msbTime').textContent=`${timeLabel} — ${dayLabel}`;
   document.getElementById('msbSub').textContent=`${next.b.company} · ${next.b.round} · ${next.b.support}`;
   document.getElementById('msbStatus').innerHTML=statusBadge(next.b.status||'pending');
   const allBest=document.getElementById('msbAllBest');
   if(allBest) allBest.style.display=(next.b.status==='approved')?'block':'none';
+
+  // Update top countdown bar
+  if(cbar){
+    cbar.style.display='flex';
+    const slotInfo=document.getElementById('cbarSlotInfo');
+    const details=document.getElementById('cbarDetails');
+    if(slotInfo) slotInfo.textContent=`${timeLabel} — ${dayLabel}`;
+    if(details) details.textContent=`${next.b.company} · ${next.b.round} · ${next.b.support}`;
+  }
 }
 
 function startCountdown(){
@@ -1493,15 +1528,41 @@ function startCountdown(){
     const sc=document.getElementById('scCountdown');
     const scSub=document.getElementById('scCountdownSub');
     const msbCd=document.getElementById('msbCd');
-    if(!next){sc.textContent='—';scSub.textContent='No approved slot';sc.classList.remove('urgent');msbCd.textContent='—';return;}
+    const cbar=document.getElementById('countdownBar');
+
+    if(!next){
+      if(sc) sc.textContent='—';
+      if(scSub) scSub.textContent='No approved slot';
+      if(sc) sc.style.color='#94a3b8';
+      if(msbCd) msbCd.textContent='—';
+      if(cbar) cbar.style.display='none';
+      return;
+    }
+
     const diff=next.slotDate-new Date();
-    if(diff<=0){sc.textContent='Now!';msbCd.textContent='Now!';renderSlots();return;}
+
+    if(diff<=0){
+      if(sc){sc.textContent='Now! 🎯';sc.style.color='#10b981';}
+      if(msbCd) msbCd.textContent='Now!';
+      if(scSub) scSub.textContent='Your slot is starting!';
+      renderSlots();
+      return;
+    }
+
     const totalMins=Math.floor(diff/60000);
     const hrs=Math.floor(totalMins/60),mins=totalMins%60,secs=Math.floor((diff%60000)/1000);
     const str=hrs>0?`${hrs}h ${mins}m`:`${mins}m ${String(secs).padStart(2,'0')}s`;
-    sc.textContent=str;msbCd.textContent=str;
-    scSub.textContent=`${next.b.company} · ${next.b.round}`;
-    if(diff<30*60*1000)sc.classList.add('urgent');else sc.classList.remove('urgent');
+
+    if(sc){
+      sc.textContent=str;
+      // Color coding: red < 30mins, amber < 2hrs, purple otherwise
+      if(diff<30*60*1000){ sc.style.color='#f43f5e'; }
+      else if(diff<2*60*60*1000){ sc.style.color='#f59e0b'; }
+      else{ sc.style.color='#6366f1'; }
+    }
+    if(msbCd) msbCd.textContent=str;
+    if(scSub) scSub.textContent=`${next.b.company} · ${next.b.round}`;
+    if(cbar) cbar.style.display='flex';
   }
   tick();countdownTimer=setInterval(tick,1000);
 }
