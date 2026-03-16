@@ -1,0 +1,116 @@
+# Slot Scheduler — Supabase Setup Guide
+# Follow these steps in order. Takes about 15 minutes.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — Create a Supabase account
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Go to https://supabase.com
+2. Click "Start your project" → Sign up (use GitHub or email)
+3. Verify your email if asked
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — Create a new project
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Click "New project"
+2. Name it: slot-scheduler
+3. Set a database password (write it down, you need it)
+4. Choose region: pick the one closest to you
+5. Click "Create new project"
+6. Wait about 2 minutes for it to spin up
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — Run the database schema
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This creates all the tables your app needs.
+
+1. In your Supabase project, click "SQL Editor" in the left sidebar
+2. Click "New query"
+3. Open the file: schema.sql (included in this folder)
+4. Copy everything from schema.sql
+5. Paste it into the SQL Editor
+6. Click the green "Run" button
+7. You should see "Success. No rows returned"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4 — Enable Realtime for your tables
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This lets all users see changes instantly without refreshing.
+
+1. In Supabase, click "Database" → "Replication" in the left sidebar
+2. Under "Tables", find these three tables and toggle them ON:
+   - bookings
+   - users
+   - support_persons
+3. Save
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5 — Get your API keys
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. In Supabase, click "Settings" (gear icon) → "API"
+2. You need TWO things:
+   a. Project URL — looks like: https://abcdefgh.supabase.co
+   b. anon public key — a long string starting with: eyJhbGci...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 6 — Add your keys to the app
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Open index.html in any text editor (Notepad, VS Code, etc.)
+2. Find these two lines near the top of the JavaScript section:
+
+   const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+   const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+
+3. Replace YOUR_SUPABASE_URL with your Project URL
+4. Replace YOUR_SUPABASE_ANON_KEY with your anon public key
+
+Example after editing:
+   const SUPABASE_URL  = 'https://abcdefgh.supabase.co';
+   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+
+5. Save the file
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 7 — Deploy to GitHub Pages
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Go to your GitHub repo (naveenediga-code/logincheck)
+2. Upload all files from this folder:
+   - index.html  ← the updated one with Supabase
+   - manifest.json
+   - sw.js
+   - icon-192.png
+   - icon-512.png
+   (you do NOT need to upload schema.sql or this SETUP.txt)
+3. Replace existing files when prompted
+4. Wait 1-2 minutes for GitHub Pages to rebuild
+5. Visit your URL: https://naveenediga-code.github.io/logincheck
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 8 — Test it
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Open the app in TWO different browsers or devices
+2. Log in as ADMIN on one, DADDY on another
+3. Book a slot as DADDY
+4. Approve it as ADMIN
+5. You should see the change appear on DADDY's screen in real time — no refresh needed!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOGINS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Username: ADMIN   Password: admin
+Username: DADDY   Password: tell
+Username: MOMMY   Password: happy
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"Could not connect to database"
+→ Check your SUPABASE_URL and SUPABASE_ANON keys in index.html
+
+"Failed to fetch" error in console
+→ Make sure RLS policies were created (Step 3 schema.sql ran successfully)
+
+Login says "User not recognized" for ADMIN
+→ The seed data in schema.sql didn't run. Go to SQL Editor and run just the INSERT statements
+
+Realtime not working
+→ Make sure you enabled replication for the tables in Step 4
