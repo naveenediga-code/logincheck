@@ -599,10 +599,10 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 // SUPABASE CONFIG — replace with your own values
 // Go to supabase.com → your project → Settings → API
 // ══════════════════════════════════════════════
-const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+const SUPABASE_URL  = 'https://pqudmfkivqbwsxxfjafy.supabase.co';
 // Paste your Publishable key below (starts with sb_publishable_...)
 // OR your legacy anon key (starts with eyJ...)  — both work fine
-const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_ANON = 'sb_publishable_agMQ6s-CNrNH8Jxgk7OlpQ_enj6Y8F0';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -1163,7 +1163,7 @@ function openBookingModal(slot, blockedMap){
   showModalOnly('bookingModal');
 }
 
-function confirmBooking(){
+async function confirmBooking(){
   const company=document.getElementById('bm-company').value.trim();
   const round=document.getElementById('bm-round').value;
   const support=document.getElementById('bm-support').value;
@@ -1261,7 +1261,7 @@ function openDeleteModal(key){
   document.getElementById('dm-msg').textContent=`Delete booking for "${b.company}" (${b.support}, ${b.round})? Cannot be undone.`;
   pendingDeleteKey=key;showModalOnly('deleteModal');
 }
-function confirmDelete(){
+async function confirmDelete(){
   if(!pendingDeleteKey)return;
   const {error:delErr}=await sb.from('bookings').delete().eq('id',pendingDeleteKey);
   if(delErr){ alert('Delete failed: '+delErr.message); return; }
@@ -1647,7 +1647,7 @@ function openDeleteUserModal(u){
   showModalOnly('deleteUserModal');
 }
 
-function confirmDeleteUser(){
+async function confirmDeleteUser(){
   if(!pendingDeleteUser)return;
   const {error}=await sb.from('users').delete().eq('username',pendingDeleteUser);
   if(error){alert('Delete failed: '+error.message);return;}
@@ -1681,7 +1681,7 @@ function renderSupportList(){
   });
 }
 
-function deleteSupport(idx){
+async function deleteSupport(idx){
   const list=getAllSupport();
   const name=list[idx];
   if(!confirm('Remove "'+name+'" from the support persons list?'))return;
@@ -1719,7 +1719,7 @@ function handleAspName(inp){
   document.getElementById('asp-confirm').disabled=!(trimmed.length>=2&&!getAllSupport().map(s=>s.toLowerCase()).includes(trimmed.toLowerCase()));
 }
 
-function confirmAddSupport(){
+async function confirmAddSupport(){
   const name=document.getElementById('asp-name').value.trim();
   if(!name||name.length<2)return;
   const list=getAllSupport();
