@@ -317,14 +317,47 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 
     <!-- Admin panel -->
     <div class="admin-section" id="adminSection" style="display:none">
-      <div class="admin-title">All bookings <span class="badge-admin">Admin View</span></div>
-      <div style="overflow-x:auto">
-        <table class="admin-table" id="adminTable">
-          <thead><tr><th>Day</th><th>Time</th><th>Booked by</th><th>Company</th><th>Round</th><th>Support person</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="adminTbody"></tbody>
-        </table>
+      <!-- Admin tabs -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div class="admin-title" style="margin-bottom:0">Admin Panel <span class="badge-admin">Admin View</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="at-btn" id="atab-bookings" onclick="switchAdminTab('bookings')" style="background:#6366f1;color:#fff;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer">Bookings</button>
+          <button class="at-btn" id="atab-users" onclick="switchAdminTab('users')" style="background:#f1f5f9;color:#64748b;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer">Manage Users</button>
+          <button class="at-btn" id="atab-support" onclick="switchAdminTab('support')" style="background:#f1f5f9;color:#64748b;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer">Support Persons</button>
+        </div>
       </div>
-      <div id="adminEmpty" style="text-align:center;padding:16px;font-size:13px;color:#94a3b8;display:none">No bookings yet</div>
+
+      <!-- Bookings tab -->
+      <div id="apanel-bookings">
+        <div style="overflow-x:auto">
+          <table class="admin-table" id="adminTable">
+            <thead><tr><th>Day</th><th>Time</th><th>Booked by</th><th>Company</th><th>Round</th><th>Support person</th><th>Duration</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="adminTbody"></tbody>
+          </table>
+        </div>
+        <div id="adminEmpty" style="text-align:center;padding:16px;font-size:13px;color:#94a3b8;display:none">No bookings yet</div>
+      </div>
+
+      <!-- Users tab -->
+      <div id="apanel-users" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button onclick="openCreateUserModal()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Syne',sans-serif">+ Add User</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table" id="usersTable">
+            <thead><tr><th>Username</th><th>Role</th><th>Last Login</th><th>Actions</th></tr></thead>
+            <tbody id="usersTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Support persons tab -->
+      <div id="apanel-support" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button onclick="openAddSupportModal()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Syne',sans-serif">+ Add Support Person</button>
+        </div>
+        <div id="supportList" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+      </div>
     </div>
 
     <!-- Day tabs -->
@@ -461,6 +494,81 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
   </div>
 </div>
 
+<!-- CREATE USER MODAL -->
+<div class="modal" id="createUserModal">
+  <div class="modal-title" id="cum-title">Create new user</div>
+  <div class="modal-sub" id="cum-sub" style="margin-bottom:4px">User can log in immediately after creation</div>
+  <div class="field" style="margin-top:18px">
+    <label>Username <span style="font-size:10px;color:#94a3b8">(letters & numbers only)</span></label>
+    <input type="text" id="cum-username" placeholder="e.g. JOHN" autocomplete="off" spellcheck="false" oninput="handleCumUsername(this)">
+    <div class="hint" id="cum-u-hint">Letters and numbers, min 3 chars</div>
+  </div>
+  <div class="field">
+    <label>Password <span style="font-size:10px;color:#94a3b8">(letters only)</span></label>
+    <input type="password" id="cum-password" placeholder="Min 4 characters" autocomplete="new-password" oninput="handleCumPassword(this)">
+    <div class="hint" id="cum-p-hint">Letters only, min 4 chars</div>
+  </div>
+  <div class="field">
+    <label>Role</label>
+    <select id="cum-role">
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+    </select>
+  </div>
+  <div class="error-banner" id="cum-error" style="margin-bottom:0;margin-top:8px">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="cum-error-msg">Username already exists.</span>
+  </div>
+  <div class="modal-actions" style="margin-top:16px">
+    <button class="modal-btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="modal-btn" id="cum-confirm" onclick="confirmCreateUser()" disabled>Create user</button>
+  </div>
+</div>
+
+<!-- EDIT USER PASSWORD MODAL -->
+<div class="modal" id="editUserModal">
+  <div class="modal-title">Change password</div>
+  <div class="modal-sub">Set a new password for <b id="eup-username"></b></div>
+  <div class="field" style="margin-top:18px">
+    <label>New password</label>
+    <input type="password" id="eup-password" placeholder="Min 4 characters" autocomplete="new-password" oninput="handleEupPassword(this)">
+    <div class="hint" id="eup-hint">Letters only, min 4 chars</div>
+  </div>
+  <div class="modal-actions" style="margin-top:16px">
+    <button class="modal-btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="modal-btn" id="eup-confirm" onclick="confirmEditUserPwd()" disabled>Update password</button>
+  </div>
+</div>
+
+<!-- DELETE USER CONFIRM MODAL -->
+<div class="modal" id="deleteUserModal">
+  <div class="modal-title" style="color:#f43f5e">Delete user?</div>
+  <div class="modal-sub" style="margin-top:8px" id="dum-msg">This will permanently remove the user.</div>
+  <div class="modal-actions" style="margin-top:20px">
+    <button class="modal-btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="modal-btn-danger" onclick="confirmDeleteUser()" style="flex:1;padding:12px;border-radius:10px">Yes, delete</button>
+  </div>
+</div>
+
+<!-- ADD SUPPORT PERSON MODAL -->
+<div class="modal" id="addSupportModal">
+  <div class="modal-title">Add support person</div>
+  <div class="modal-sub">They will appear in the support person dropdown when booking slots</div>
+  <div class="field" style="margin-top:18px">
+    <label>Full name</label>
+    <input type="text" id="asp-name" placeholder="e.g. Kiran" autocomplete="off" spellcheck="false" oninput="handleAspName(this)">
+    <div class="hint" id="asp-hint">Letters only, min 2 chars</div>
+  </div>
+  <div class="error-banner" id="asp-error" style="margin-bottom:0;margin-top:8px">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>This person is already in the list.</span>
+  </div>
+  <div class="modal-actions" style="margin-top:16px">
+    <button class="modal-btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="modal-btn" id="asp-confirm" onclick="confirmAddSupport()" disabled>Add person</button>
+  </div>
+</div>
+
 <!-- NOTIFICATION TOAST -->
 <div id="notifToast" style="display:none;position:fixed;top:20px;right:20px;z-index:9999;min-width:280px;max-width:340px;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:14px 16px;animation:slideInRight .3s ease;border-left:4px solid #6366f1">
   <div style="display:flex;align-items:flex-start;gap:10px">
@@ -485,18 +593,42 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 // admin / admin (admin user)
 // DADDY / tell  (user)
 // MOMMY / happy (user)
-const USERS = {
-  ADMIN: { hash:'8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', isAdmin:true,  label:'Admin'  },
-  DADDY: { hash:'879915cfdc2cb4852ed05241911d8de5ca6e2cc4085746c14f13ad304157e264', isAdmin:false, label:'DADDY'  },
-  MOMMY: { hash:'489f719cadf919094ddb38e7654de153ac33c02febb5de91e5345cbe372cf4a0', isAdmin:false, label:'MOMMY'  }
+// ── BUILT-IN USERS (fallback if localStorage empty) ──
+const BUILTIN_USERS = {
+  ADMIN: { hash:'8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', isAdmin:true  },
+  DADDY: { hash:'879915cfdc2cb4852ed05241911d8de5ca6e2cc4085746c14f13ad304157e264', isAdmin:false },
+  MOMMY: { hash:'489f719cadf919094ddb38e7654de153ac33c02febb5de91e5345cbe372cf4a0', isAdmin:false }
 };
-// Note: username is case sensitive — ADMIN, DADDY, MOMMY
-
 const SECURITY = {
   ADMIN:{ question:'What is your admin secret word?', hash:'8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918' },
   DADDY:{ question:'What is your favourite colour?',  hash:'16477688c0e00699c6cfa4497a3612d7e83c532062b64b250fed8908128ed548' },
   MOMMY:{ question:'What city were you born in?',     hash:'6089854c94ca5454b76be6752c562901a985f64c9a946f62976aeab593b83161' }
 };
+
+// ── DYNAMIC USER STORE (localStorage) ──
+function getDynUsers(){
+  try{ return JSON.parse(localStorage.getItem('lc_users')||'null'); }catch{return null;}
+}
+function saveDynUsers(u){ localStorage.setItem('lc_users',JSON.stringify(u)); }
+function getUsers(){
+  const dyn=getDynUsers();
+  return dyn || JSON.parse(JSON.stringify(BUILTIN_USERS));
+}
+function initUsersIfNeeded(){
+  if(!getDynUsers()) saveDynUsers(JSON.parse(JSON.stringify(BUILTIN_USERS)));
+}
+
+// ── DYNAMIC SUPPORT LIST ──
+function getSupportList(){
+  try{ return JSON.parse(localStorage.getItem('lc_support')||'null'); }catch{return null;}
+}
+function saveSupportList(s){ localStorage.setItem('lc_support',JSON.stringify(s)); }
+function getAllSupport(){
+  return getSupportList() || ['Sumanth','Surya','Veer','Sunil','Raghuveer'];
+}
+function initSupportIfNeeded(){
+  if(!getSupportList()) saveSupportList(['Sumanth','Surya','Veer','Sunil','Raghuveer']);
+}
 
 // Runtime password overrides persisted in sessionStorage
 function getRuntimePwd(){ try{ return JSON.parse(sessionStorage.getItem('lc_rpwd')||'{}'); }catch{return{};} }
@@ -605,6 +737,7 @@ async function doLogin(){
   btn.textContent='Verifying...';btn.disabled=true;
   const hashed=await sha256(p);
   const rp=getRuntimePwd();
+  const USERS=getUsers();
   const expected=rp[u]||(USERS[u]&&USERS[u].hash);
   if(expected&&expected===hashed){
     const lastLogins=getLastLogins();
@@ -612,11 +745,11 @@ async function doLogin(){
     saveLastLogin(u,new Date().toISOString());
     saveSession(u);
     currentUser=u;
-    currentIsAdmin=USERS[u].isAdmin;
+    currentIsAdmin=getUsers()[u].isAdmin;
     document.getElementById('authError').classList.remove('show');
     showHome(prevLogin);
   } else {
-    document.getElementById('authErrorMsg').textContent=USERS[u]?'Incorrect password. Please try again.':'User not recognized.';
+    document.getElementById('authErrorMsg').textContent=getUsers()[u]?'Incorrect password. Please try again.':'User not recognized.';
     document.getElementById('authError').classList.add('show');
     shake('password');document.getElementById('password').className='err';
     setHint('p-hint','Incorrect — check your password','e');
@@ -693,12 +826,14 @@ function stopIdleTimer(){ if(idleTimer){clearInterval(idleTimer);idleTimer=null;
 
 // ── PERSIST SESSION ──
 window.addEventListener('load',()=>{
+  initUsersIfNeeded();
+  initSupportIfNeeded();
   const sess=getSession();
-  if(sess&&USERS[sess.user]){
+  if(sess&&getUsers()[sess.user]){
     const lastLogins=getLastLogins();
     const prevLogin=lastLogins[sess.user]||null;
     currentUser=sess.user;
-    currentIsAdmin=USERS[sess.user].isAdmin;
+    currentIsAdmin=getUsers()[sess.user].isAdmin;
     showHome(prevLogin);
   }
 });
@@ -737,39 +872,49 @@ function buildDayTabs(){
 // Returns Map<slotKey, Set<supportPerson>> — which support persons are busy in each slot
 function getBlockedBySupport(){
   const slots=getSlots();
-  const blocked=new Map(); // key -> Set of busy support persons
+  const blocked=new Map(); // timeKey -> Set of busy support persons
   Object.keys(slots).forEach(key=>{
     const b=slots[key];
-    if(b.status==='rejected')return; // rejected frees up
-    const [dayKey,timeStr]=key.split('_');
+    if(b.status==='rejected')return;
+    // Use _key (canonical time key) if present, else parse from storage key
+    const timeKey=b._key||key;
+    const parts=timeKey.split('_');
+    const dayKey=parts[0], timeStr=parts[1];
+    if(!timeStr)return;
     const startH=parseInt(timeStr.slice(0,2)), startM=parseInt(timeStr.slice(2,4));
     const startTotal=startH*60+startM;
     const endTotal=startTotal+parseInt(b.duration);
-    // Mark support person as busy for all overlapping 30-min slots
+    // Mark support person busy for the START slot and all overflow slots
+    const addBusy=(slotTimeKey)=>{
+      if(!blocked.has(slotTimeKey)) blocked.set(slotTimeKey, new Set());
+      blocked.get(slotTimeKey).add(b.support);
+    };
+    // Mark the start slot itself
+    addBusy(timeKey);
+    // Mark all overflow slots within duration
     for(let t=startTotal+30;t<endTotal;t+=30){
       const bh=Math.floor(t/60), bm=t%60;
-      const bKey=`${dayKey}_${String(bh).padStart(2,'0')}${String(bm).padStart(2,'0')}`;
-      if(!blocked.has(bKey)) blocked.set(bKey, new Set());
-      blocked.get(bKey).add(b.support);
+      const overflowKey=`${dayKey}_${String(bh).padStart(2,'0')}${String(bm).padStart(2,'0')}`;
+      addBusy(overflowKey);
     }
   });
   return blocked;
 }
 
-const ALL_SUPPORT=['Sumanth','Surya','Veer','Sunil','Raghuveer'];
+// ALL_SUPPORT is now dynamic — use getAllSupport()
 
 // A slot key is "fully blocked" only if ALL support persons are busy there
 function isFullyBlocked(key, blockedMap){
   if(!blockedMap.has(key)) return false;
   const busy=blockedMap.get(key);
-  return ALL_SUPPORT.every(s=>busy.has(s));
+  return getAllSupport().every(s=>busy.has(s));
 }
 
 // Returns which support persons are still free for a given slot key
 function getFreeSupport(key, blockedMap){
-  if(!blockedMap.has(key)) return ALL_SUPPORT.slice();
+  if(!blockedMap.has(key)) return getAllSupport().slice();
   const busy=blockedMap.get(key);
-  return ALL_SUPPORT.filter(s=>!busy.has(s));
+  return getAllSupport().filter(s=>!busy.has(s));
 }
 
 function generateSlots(dayKey){
@@ -796,12 +941,12 @@ function renderSlots(){
   grid.innerHTML='';
 
   daySlots.forEach(s=>{
-    const booking=allSlots[s.key];
-    const isFullBlocked=!booking&&isFullyBlocked(s.key, blockedMap);
-    const isPartialBlocked=!booking&&!isFullBlocked&&blockedMap.has(s.key);
-    const isBlocked=isFullBlocked; // only truly blocked if ALL support persons busy
-    const isBooked=!!booking;
-    const isMine=isBooked&&booking.bookedBy===currentUser;
+    // Find ALL bookings for this time slot (multiple support persons possible)
+    const slotBookings=Object.entries(allSlots).filter(([k,b])=>(b._key||k)===s.key);
+    const myBooking=slotBookings.find(([k,b])=>b.bookedBy===currentUser);
+    const hasAnyBooking=slotBookings.length>0;
+    const isFullBlocked=isFullyBlocked(s.key, blockedMap);
+    const isPartialBlocked=!isFullBlocked&&blockedMap.has(s.key);
     const card=document.createElement('div');
 
     let cls='slot-card ';
@@ -809,38 +954,54 @@ function renderSlots(){
     let infoHTML='';
     let deleteBtn='';
 
-    if(isBlocked){
+    if(isFullBlocked&&!myBooking){
       cls+='blocked';
       statusHTML=`<div class="slot-status" style="color:#94a3b8"><span class="slot-dot" style="background:#cbd5e1"></span>All busy</div>`;
+    } else if(myBooking){
+      // Show MY booking on this slot
+      const [mk,mb]=myBooking;
+      const st=mb.status||'pending';
+      cls+=st==='approved'?'booked-approved mine':st==='rejected'?'booked-rejected':'booked-pending';
+      statusHTML=`<div class="slot-status">${statusBadge(st)}</div>`;
+      infoHTML+=`<div class="slot-company">${mb.company||'—'}</div>`;
+      infoHTML+=`<div class="slot-info">${mb.round} · ${mb.support}</div>`;
+      infoHTML+=`<div class="slot-info">${mb.duration} mins</div>`;
+      deleteBtn=`<button class="slot-delete" onclick="askDelete(event,'${mk}')">✕</button>`;
+    } else if(hasAnyBooking&&!myBooking){
+      // Other people's bookings — show as occupied but still bookable with free support
+      const freeNow=getFreeSupport(s.key, blockedMap);
+      if(freeNow.length>0){
+        cls+='free';
+        statusHTML=`<div class="slot-status" style="color:#f59e0b"><span class="slot-dot" style="background:#f59e0b"></span>Partially available</div>`;
+        infoHTML+=`<div class="slot-info" style="color:#92400e;font-size:10px">Free: ${freeNow.join(', ')}</div>`;
+      } else {
+        cls+='blocked';
+        statusHTML=`<div class="slot-status" style="color:#94a3b8"><span class="slot-dot" style="background:#cbd5e1"></span>All busy</div>`;
+      }
     } else if(isPartialBlocked){
-      cls+='free'; // still bookable
+      cls+='free';
       const free=getFreeSupport(s.key, blockedMap);
       statusHTML=`<div class="slot-status" style="color:#f59e0b"><span class="slot-dot" style="background:#f59e0b"></span>Partially available</div>`;
       infoHTML+=`<div class="slot-info" style="color:#92400e;font-size:10px">Free: ${free.join(', ')}</div>`;
-    } else if(!isBooked){
+    } else {
       cls+='free';
       statusHTML=`<div class="slot-status" style="color:#10b981"><span class="slot-dot" style="background:#10b981"></span>Available</div>`;
-    } else {
-      const st=booking.status||'pending';
-      if(isMine){
-        cls+=st==='approved'?'booked-approved mine':st==='rejected'?'booked-rejected':'booked-pending';
-      } else {
-        cls+=st==='approved'?'booked-other-approved':st==='rejected'?'booked-rejected':'booked-other-pending';
-      }
-      statusHTML=`<div class="slot-status">${statusBadge(st)}</div>`;
-      infoHTML+=`<div class="slot-company">${booking.company||'—'}</div>`;
-      infoHTML+=`<div class="slot-info">${booking.round} · ${booking.support}</div>`;
-      infoHTML+=`<div class="slot-info">${booking.duration} mins</div>`;
-      if(isMine||currentIsAdmin){
-        deleteBtn=`<button class="slot-delete" onclick="askDelete(event,'${s.key}')">✕</button>`;
-      }
+    }
+
+    // Admin can also delete other people's bookings from the slot card
+    if(currentIsAdmin && hasAnyBooking && !myBooking){
+      slotBookings.forEach(([k,b])=>{
+        deleteBtn+=`<button class="slot-delete" style="top:${slotBookings.indexOf([k,b])*26+7}px" onclick="askDelete(event,'${k}')">✕</button>`;
+      });
     }
 
     card.className=cls;
     card.innerHTML=`${deleteBtn}<div class="slot-time">${s.time}</div><div class="slot-dur-label">30 min slot</div>${statusHTML}${infoHTML}`;
 
-    if(!isBooked&&!isBlocked) card.onclick=()=>openBookingModal(s, blockedMap);
-    else if(isBooked) card.onclick=()=>openViewModal(s.key);
+    const canBook=!myBooking&&getFreeSupport(s.key,blockedMap).length>0;
+    if(canBook) card.onclick=()=>openBookingModal(s, blockedMap);
+    else if(myBooking) card.onclick=()=>openViewModal(myBooking[0]);
+    else if(hasAnyBooking&&currentIsAdmin) card.onclick=()=>openViewModal(slotBookings[0][0]);
 
     grid.appendChild(card);
   });
@@ -855,7 +1016,7 @@ function openBookingModal(slot, blockedMap){
   document.getElementById('bm-round').value='';
   document.getElementById('bm-duration').value='90';
   // Rebuild support dropdown — only show free support persons for this slot
-  const freeSupport = blockedMap ? getFreeSupport(slot.key, blockedMap) : ALL_SUPPORT.slice();
+  const freeSupport = blockedMap ? getFreeSupport(slot.key, blockedMap) : getAllSupport().slice();
   const sel=document.getElementById('bm-support');
   sel.innerHTML='<option value="">Select support person</option>';
   freeSupport.forEach(name=>{
@@ -876,27 +1037,44 @@ function confirmBooking(){
   const duration=parseInt(document.getElementById('bm-duration').value);
   if(!company||!round||!support){alert('Please fill in all fields.');return;}
   const slots=getSlots();
-  const blockedMap=getBlockedBySupport();
-  // Check if this exact slot key is already taken
-  if(slots[pendingSlotKey]){alert('This slot was just taken. Please choose another.');closeModal();renderSlots();return;}
-  // Check if chosen support person is free for the full duration window
+
+  // Key is time-based. Multiple bookings at same time are allowed IF support persons differ.
+  // Check: is the chosen support person already booked at this START time?
+  const existingAtStart=Object.values(slots).filter(b=>{
+    if(b.status==='rejected') return false;
+    // find all bookings whose time key matches pendingSlotKey
+    return b._key===pendingSlotKey && b.support===support;
+  });
+  if(existingAtStart.length>0){
+    alert(`${support} is already booked at this time. Please choose a different support person.`);return;
+  }
+
+  // Check support person is free across the entire duration window
   const [dayKey,timeStr]=pendingSlotKey.split('_');
   const startH=parseInt(timeStr.slice(0,2)),startM=parseInt(timeStr.slice(2,4));
   const startTotal=startH*60+startM, endTotal=startTotal+duration;
-  for(let t=startTotal+30;t<endTotal;t+=30){
-    const bh=Math.floor(t/60),bm=t%60;
-    const chk=`${dayKey}_${String(bh).padStart(2,'0')}${String(bm).padStart(2,'0')}`;
-    // Block if: this sub-slot is directly booked, OR the chosen support person is busy there
-    const directlyBooked=slots[chk]&&slots[chk].status!=='rejected';
-    const supportBusy=blockedMap.has(chk)&&blockedMap.get(chk).has(support);
-    if(directlyBooked&&slots[chk]&&slots[chk].support===support){
-      alert(`${support} is already booked during this duration window. Please choose a different support person or time slot.`);return;
-    }
-    if(supportBusy){
-      alert(`${support} is busy during this time window. Please select a different support person or shorter duration.`);return;
-    }
+
+  // Check the start slot itself: is this support person booked in any existing booking that overlaps?
+  const supportBusyAtStart=Object.entries(slots).some(([k,b])=>{
+    if(b.status==='rejected') return false;
+    if(b.support!==support) return false;
+    const [dk,ts]=k.split('_');
+    if(dk!==dayKey) return false;
+    const bStartH=parseInt(ts.slice(0,2)),bStartM=parseInt(ts.slice(2,4));
+    const bStart=bStartH*60+bStartM, bEnd=bStart+parseInt(b.duration);
+    // overlap if: bStart < endTotal AND bEnd > startTotal
+    return bStart < endTotal && bEnd > startTotal;
+  });
+
+  if(supportBusyAtStart){
+    alert(`${support} is already busy during this time window. Please choose a different support person or adjust the duration.`);return;
   }
-  slots[pendingSlotKey]={bookedBy:currentUser,company,round,support,duration,status:'pending',bookedAt:new Date().toISOString()};
+
+  // Unique key: time + support person (allows multiple bookings at same time with different support)
+  const bookingKey=`${pendingSlotKey}_${support.replace(/\s+/g,'_')}`;
+  if(slots[bookingKey]){alert('This booking already exists.');return;}
+
+  slots[bookingKey]={_key:pendingSlotKey,bookedBy:currentUser,company,round,support,duration,status:'pending',bookedAt:new Date().toISOString()};
   saveSlots(slots);
   closeModal();renderSlots();renderAdminSection();renderMySlotBanner();startCountdown();
 }
@@ -904,7 +1082,9 @@ function confirmBooking(){
 // ── VIEW SLOT ──
 function openViewModal(key){
   const slots=getSlots();const b=slots[key];if(!b)return;
-  const [dayKey,timeStr]=key.split('_');
+  const timeKey=b._key||key;
+  const parts=timeKey.split('_');
+  const dayKey=parts[0], timeStr=parts[1];
   const h=parseInt(timeStr.slice(0,2)),m=parseInt(timeStr.slice(2,4));
   const dayObj=getDays().find(d=>d.key===dayKey);
   const isMine=b.bookedBy===currentUser;
@@ -958,7 +1138,9 @@ function renderAdminSection(){
   document.getElementById('adminEmpty').style.display='none';
   keys.sort().forEach(key=>{
     const b=slots[key];
-    const [dayKey,timeStr]=key.split('_');
+    const timeKey=b._key||key;
+    const tparts=timeKey.split('_');
+    const dayKey=tparts[0], timeStr=tparts[1]||'0000';
     const h=parseInt(timeStr.slice(0,2)),m=parseInt(timeStr.slice(2,4));
     const dayObj=getDays().find(d=>d.key===dayKey);
     const tr=document.createElement('tr');
@@ -984,6 +1166,7 @@ function renderAdminSection(){
 
 function checkSlotNotifications(){
   if(!currentUser||currentIsAdmin)return;
+  const USERS=getUsers();
   const slots=getSlots();
   const notifKey='lc_notif_'+currentUser;
   const seen=JSON.parse(localStorage.getItem(notifKey)||'{}');
@@ -1033,8 +1216,9 @@ function adminAction(key,action){
   startCountdown();
   // Notify admin of action
   const b=slots[key];
-  const [dayKey,timeStr]=key.split('_');
-  const h=parseInt(timeStr.slice(0,2)),m=parseInt(timeStr.slice(2,4));
+  const timeKey2=b._key||key;
+  const tp2=timeKey2.split('_');
+  const h=parseInt((tp2[1]||'0000').slice(0,2)),m=parseInt((tp2[1]||'0000').slice(2,4));
   const timeLabel=fmtTime(h,m);
   if(action==='approved'){
     showNotif('Slot Approved','Booking for '+b.company+' ('+timeLabel+') has been approved.','approved');
@@ -1069,7 +1253,9 @@ function renderMySlotBanner(){
   const banner=document.getElementById('mySlotBanner');
   if(!next){banner.classList.remove('show');return;}
   banner.classList.add('show');
-  const [dayKey,timeStr]=next.key.split('_');
+  const bannerTimeKey=next.b._key||next.key;
+  const btp=bannerTimeKey.split('_');
+  const dayKey=btp[0], timeStr=btp[1]||'0000';
   const h=parseInt(timeStr.slice(0,2)),m=parseInt(timeStr.slice(2,4));
   const dayObj=getDays().find(d=>d.key===dayKey);
   document.getElementById('msbTime').textContent=`${fmtTime(h,m)} — ${dayObj?dayObj.label+' '+dayObj.sub:dayKey}`;
@@ -1101,13 +1287,13 @@ function startCountdown(){
 
 // ── MODAL HELPERS ──
 function showModalOnly(id){
-  ['forgotModal','bookingModal','viewModal','deleteModal'].forEach(m=>document.getElementById(m).classList.remove('show'));
+  ['forgotModal','bookingModal','viewModal','deleteModal','createUserModal','editUserModal','deleteUserModal','addSupportModal'].forEach(m=>document.getElementById(m).classList.remove('show'));
   document.getElementById('modalOverlay').classList.add('show');
   document.getElementById(id).classList.add('show');
 }
 function closeModal(){
   document.getElementById('modalOverlay').classList.remove('show');
-  ['forgotModal','bookingModal','viewModal','deleteModal'].forEach(m=>document.getElementById(m).classList.remove('show'));
+  ['forgotModal','bookingModal','viewModal','deleteModal','createUserModal','editUserModal','deleteUserModal','addSupportModal'].forEach(m=>document.getElementById(m).classList.remove('show'));
 }
 
 // ── FORGOT PASSWORD ──
@@ -1124,13 +1310,13 @@ function handleResetUser(inp){
   const clean=inp.value.replace(/[^A-Z]/g,'');if(inp.value!==clean)inp.value=clean;
   document.getElementById('resetUserErr').classList.remove('show');
   if(!clean){inp.className='';setHint('ru-hint','Capital letters only','');}
-  else if(!USERS[clean]){inp.className='err';setHint('ru-hint','User not found','e');}
+  else if(!getUsers()[clean]){inp.className='err';setHint('ru-hint','User not found','e');}
   else{inp.className='ok';setHint('ru-hint',`Found: ${clean}`,'s');}
-  document.getElementById('fp1Btn').disabled=!USERS[clean];
+  document.getElementById('fp1Btn').disabled=!getUsers()[clean];
 }
 function fpStep2(){
   const u=document.getElementById('resetUser').value;
-  if(!USERS[u]){document.getElementById('resetUserErr').classList.add('show');return;}
+  if(!getUsers()[u]){document.getElementById('resetUserErr').classList.add('show');return;}
   fpResetUser=u;
   document.getElementById('fpQuestion').textContent=SECURITY[u].question;
   document.getElementById('secAns').value='';document.getElementById('secAns').className='';
@@ -1165,6 +1351,235 @@ function handleNewPass(){
 async function doReset(){
   setRuntimePwd(fpResetUser,await sha256(document.getElementById('newPass').value));
   fpShowStep('fp4');
+}
+
+// ── ADMIN TABS ──
+function switchAdminTab(tab){
+  ['bookings','users','support'].forEach(t=>{
+    document.getElementById('apanel-'+t).style.display=t===tab?'block':'none';
+    const btn=document.getElementById('atab-'+t);
+    btn.style.background=t===tab?'#6366f1':'#f1f5f9';
+    btn.style.color=t===tab?'#fff':'#64748b';
+  });
+  if(tab==='users') renderUsersTable();
+  if(tab==='support') renderSupportList();
+}
+
+// ── USERS TABLE ──
+function renderUsersTable(){
+  const users=getUsers();
+  const lastLogins=getLastLogins();
+  const tbody=document.getElementById('usersTbody');
+  tbody.innerHTML='';
+  Object.keys(users).forEach(u=>{
+    const user=users[u];
+    const ll=lastLogins[u]?new Date(lastLogins[u]).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'Never';
+    const isBuiltIn=['ADMIN','DADDY','MOMMY'].includes(u);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:600;color:#0f172a">${u}</td>
+      <td>${user.isAdmin?'<span class="badge-admin">Admin</span>':'<span style="font-size:11px;color:#64748b">User</span>'}</td>
+      <td style="color:#64748b;font-size:12px">${ll}</td>
+      <td>
+        <div class="at-actions">
+          <button class="at-btn at-approve" onclick="openEditUserPwdModal('${u}')">Change pwd</button>
+          ${!isBuiltIn||u!=='ADMIN'?`<button class="at-btn at-delete" onclick="openDeleteUserModal('${u}')">Delete</button>`:'<span style="font-size:11px;color:#cbd5e1">Protected</span>'}
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── CREATE USER ──
+let pendingDeleteUser=null;
+function openCreateUserModal(){
+  document.getElementById('cum-username').value='';
+  document.getElementById('cum-username').className='';
+  document.getElementById('cum-password').value='';
+  document.getElementById('cum-password').className='';
+  document.getElementById('cum-role').value='user';
+  document.getElementById('cum-error').classList.remove('show');
+  setHint('cum-u-hint','Letters and numbers, min 3 chars','');
+  setHint('cum-p-hint','Letters only, min 4 chars','');
+  document.getElementById('cum-confirm').disabled=true;
+  showModalOnly('createUserModal');
+  setTimeout(()=>document.getElementById('cum-username').focus(),100);
+}
+
+function handleCumUsername(inp){
+  const clean=inp.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  inp.value=clean;
+  document.getElementById('cum-error').classList.remove('show');
+  if(!clean){inp.className='';setHint('cum-u-hint','Letters and numbers, min 3 chars','');}
+  else if(clean.length<3){inp.className='err';setHint('cum-u-hint',`Need ${3-clean.length} more`,'e');}
+  else if(getUsers()[clean]){inp.className='err';setHint('cum-u-hint','Username already taken','e');}
+  else{inp.className='ok';setHint('cum-u-hint','Available ✓','s');}
+  checkCumForm();
+}
+
+function handleCumPassword(inp){
+  const clean=inp.value.replace(/[^a-zA-Z]/g,'');
+  inp.value=clean;
+  if(!clean){inp.className='';setHint('cum-p-hint','Letters only, min 4 chars','');}
+  else if(clean.length<4){inp.className='err';setHint('cum-p-hint',`Need ${4-clean.length} more`,'e');}
+  else{inp.className='ok';setHint('cum-p-hint',`${clean.length} characters — valid`,'s');}
+  checkCumForm();
+}
+
+function checkCumForm(){
+  const u=document.getElementById('cum-username').value;
+  const p=document.getElementById('cum-password').value;
+  const uValid=u.length>=3&&!getUsers()[u];
+  const pValid=p.length>=4;
+  document.getElementById('cum-confirm').disabled=!(uValid&&pValid);
+}
+
+async function confirmCreateUser(){
+  const u=document.getElementById('cum-username').value;
+  const p=document.getElementById('cum-password').value;
+  const role=document.getElementById('cum-role').value;
+  if(getUsers()[u]){
+    document.getElementById('cum-error-msg').textContent='Username already exists.';
+    document.getElementById('cum-error').classList.add('show');
+    return;
+  }
+  const hashed=await sha256(p);
+  const users=getUsers();
+  users[u]={hash:hashed,isAdmin:role==='admin'};
+  saveDynUsers(users);
+  closeModal();
+  renderUsersTable();
+  showNotif('User created','User "'+u+'" has been created successfully.','approved');
+}
+
+// ── EDIT USER PASSWORD ──
+let editingUser=null;
+function openEditUserPwdModal(u){
+  editingUser=u;
+  document.getElementById('eup-username').textContent=u;
+  document.getElementById('eup-password').value='';
+  document.getElementById('eup-password').className='';
+  setHint('eup-hint','Letters only, min 4 chars','');
+  document.getElementById('eup-confirm').disabled=true;
+  showModalOnly('editUserModal');
+  setTimeout(()=>document.getElementById('eup-password').focus(),100);
+}
+
+function handleEupPassword(inp){
+  const clean=inp.value.replace(/[^a-zA-Z]/g,'');
+  inp.value=clean;
+  if(!clean){inp.className='';setHint('eup-hint','Letters only, min 4 chars','');}
+  else if(clean.length<4){inp.className='err';setHint('eup-hint',`Need ${4-clean.length} more`,'e');}
+  else{inp.className='ok';setHint('eup-hint',`${clean.length} characters — valid`,'s');}
+  document.getElementById('eup-confirm').disabled=clean.length<4;
+}
+
+async function confirmEditUserPwd(){
+  const p=document.getElementById('eup-password').value;
+  const hashed=await sha256(p);
+  const users=getUsers();
+  if(!users[editingUser])return;
+  users[editingUser].hash=hashed;
+  saveDynUsers(users);
+  // also clear any runtime override
+  const rp=getRuntimePwd();
+  delete rp[editingUser];
+  sessionStorage.setItem('lc_rpwd',JSON.stringify(rp));
+  closeModal();
+  showNotif('Password updated','Password for "'+editingUser+'" has been changed.','info');
+}
+
+// ── DELETE USER ──
+function openDeleteUserModal(u){
+  pendingDeleteUser=u;
+  document.getElementById('dum-msg').textContent='Delete user "'+u+'"? All their slot bookings will remain but they cannot log in anymore.';
+  showModalOnly('deleteUserModal');
+}
+
+function confirmDeleteUser(){
+  if(!pendingDeleteUser)return;
+  const users=getUsers();
+  delete users[pendingDeleteUser];
+  saveDynUsers(users);
+  pendingDeleteUser=null;
+  closeModal();
+  renderUsersTable();
+  showNotif('User deleted','User has been removed from the system.','warning');
+}
+
+// ── SUPPORT PERSONS ──
+function renderSupportList(){
+  const list=getAllSupport();
+  const container=document.getElementById('supportList');
+  container.innerHTML='';
+  if(list.length===0){
+    container.innerHTML='<div style="color:#94a3b8;font-size:13px;padding:12px">No support persons added yet.</div>';
+    return;
+  }
+  list.forEach((name,idx)=>{
+    const pill=document.createElement('div');
+    pill.style.cssText='display:flex;align-items:center;gap:8px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:100px;padding:8px 14px;font-size:13px;font-weight:500;color:#0f172a';
+    pill.innerHTML=`
+      <span style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0">${name[0]}</span>
+      <span>${name}</span>
+      <button onclick="deleteSupport(${idx})" style="background:#fee2e2;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:#f43f5e;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">×</button>
+    `;
+    container.appendChild(pill);
+  });
+}
+
+function deleteSupport(idx){
+  const list=getAllSupport();
+  const name=list[idx];
+  if(!confirm('Remove "'+name+'" from the support persons list?'))return;
+  list.splice(idx,1);
+  saveSupportList(list);
+  renderSupportList();
+  showNotif('Support person removed','"'+name+'" removed from the list.','warning');
+}
+
+function openAddSupportModal(){
+  document.getElementById('asp-name').value='';
+  document.getElementById('asp-name').className='';
+  setHint('asp-hint','Letters only, min 2 chars','');
+  document.getElementById('asp-error').classList.remove('show');
+  document.getElementById('asp-confirm').disabled=true;
+  showModalOnly('addSupportModal');
+  setTimeout(()=>document.getElementById('asp-name').focus(),100);
+}
+
+function handleAspName(inp){
+  const clean=inp.value.replace(/[^a-zA-Z\s]/g,'');
+  if(inp.value!==clean) inp.value=clean;
+  const trimmed=clean.trim();
+  document.getElementById('asp-error').classList.remove('show');
+  if(!trimmed){inp.className='';setHint('asp-hint','Letters only, min 2 chars','');}
+  else if(trimmed.length<2){inp.className='err';setHint('asp-hint','Too short','e');}
+  else if(getAllSupport().map(s=>s.toLowerCase()).includes(trimmed.toLowerCase())){
+    inp.className='err';
+    document.getElementById('asp-error').classList.add('show');
+    setHint('asp-hint','Already in list','e');
+  }
+  else{inp.className='ok';setHint('asp-hint',trimmed+' — ready to add','s');}
+  document.getElementById('asp-confirm').disabled=!(trimmed.length>=2&&!getAllSupport().map(s=>s.toLowerCase()).includes(trimmed.toLowerCase()));
+}
+
+function confirmAddSupport(){
+  const name=document.getElementById('asp-name').value.trim();
+  if(!name||name.length<2)return;
+  const list=getAllSupport();
+  if(list.map(s=>s.toLowerCase()).includes(name.toLowerCase())){
+    document.getElementById('asp-error').classList.add('show');
+    return;
+  }
+  // Capitalize first letter of each word
+  const formatted=name.replace(/\w/g,c=>c.toUpperCase());
+  list.push(formatted);
+  saveSupportList(list);
+  closeModal();
+  renderSupportList();
+  showNotif('Support person added','"'+formatted+'" added to the support persons list.','approved');
 }
 
 // ── PWA ──
