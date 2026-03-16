@@ -599,8 +599,10 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
 // SUPABASE CONFIG — replace with your own values
 // Go to supabase.com → your project → Settings → API
 // ══════════════════════════════════════════════
-const SUPABASE_URL  = 'https://pqudmfkivqbwsxxfjafy.supabase.co';   // e.g. https://xxxx.supabase.co
-const SUPABASE_ANON = 'sb_publishable_agMQ6s-CNrNH8Jxgk7OlpQ_enj6Y8F0'; // starts with eyJ...
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+// Paste your Publishable key below (starts with sb_publishable_...)
+// OR your legacy anon key (starts with eyJ...)  — both work fine
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -808,9 +810,10 @@ function statusBadge(status){
 // ── INTERCEPTORS ──
 function interceptUser(e){
   if((e.ctrlKey||e.metaKey)||e.key.length!==1)return;
+  // Only block truly invalid chars (spaces, symbols) — letters auto-uppercase on input
   if(!/^[A-Za-z0-9]$/.test(e.key)){
     e.preventDefault();shake('username');
-    setHint('u-hint',`"${e.key}" not allowed`,'w');
+    setHint('u-hint',`"${e.key}" not allowed — letters and numbers only`,'w');
   }
 }
 
@@ -825,11 +828,15 @@ function interceptPassField(e,fId,hId,sId,mId,cId){
 
 function handleUser(e){
   const inp=e.target;
+  // Auto-uppercase everything typed
+  const pos=inp.selectionStart;
+  inp.value=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  try{inp.setSelectionRange(pos,pos);}catch(err){}
   document.getElementById('u-suggest').classList.remove('show');
   document.getElementById('authError').classList.remove('show');
-  if(!inp.value){inp.className='';setHint('u-hint','Username (case sensitive)','');}
+  if(!inp.value){inp.className='';setHint('u-hint','Auto-uppercased — type your username','');}
   else if(inp.value.length<3){inp.className='err';setHint('u-hint',`Need ${3-inp.value.length} more`,'e');}
-  else{inp.className='ok';setHint('u-hint','Valid','s');}
+  else{inp.className='ok';setHint('u-hint',inp.value+' — valid','s');}
   checkForm();
 }
 
@@ -845,8 +852,8 @@ function handlePass(e){
 }
 
 function checkForm(){
-  const u=document.getElementById('username').value;
-  const p=document.getElementById('password').value;
+  const u=document.getElementById('username').value.trim();
+  const p=document.getElementById('password').value.trim();
   document.getElementById('loginBtn').disabled=!(u.length>=3&&p.length>=3);
 }
 
