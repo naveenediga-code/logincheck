@@ -467,7 +467,15 @@ body{font-family:'Inter',sans-serif;background:#f0f0ea;min-height:100vh}
       <option value="Raghuveer">Raghuveer</option>
     </select>
   </div>
-  <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-top:4px">
+  <!-- Admin only: book on behalf of another user -->
+  <div class="field" id="bm-behalf-wrap" style="display:none">
+    <label style="display:flex;align-items:center;gap:6px">Book for <span style="background:#ede9fe;color:#7c3aed;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:100px">Admin only</span></label>
+    <select id="bm-behalf">
+      <option value="">Select user...</option>
+    </select>
+    <div class="hint">Slot will be assigned to this user and auto-approved</div>
+  </div>
+  <div id="bm-pending-note" style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-top:4px">
     ⏳ Slot will be <b>pending admin approval</b> after booking.
   </div>
   <div class="modal-actions" style="margin-top:16px">
@@ -1149,12 +1157,13 @@ function renderSlots(){
 // ── BOOKING ──
 function openBookingModal(slot, blockedMap){
   pendingSlotKey=slot.key;
-  document.getElementById('bm-title').textContent='Request slot';
+  document.getElementById('bm-title').textContent=currentIsAdmin?'Book slot':'Request slot';
   document.getElementById('bm-sub').textContent=`${slot.time} · ${getDays().find(d=>d.key===slot.dayKey)?.label||slot.dayKey}`;
   document.getElementById('bm-company').value='';
   document.getElementById('bm-round').value='';
   document.getElementById('bm-duration').value='90';
-  // Rebuild support dropdown — only show free support persons for this slot
+
+  // Rebuild support dropdown
   const freeSupport = blockedMap ? getFreeSupport(slot.key, blockedMap) : getAllSupport().slice();
   const sel=document.getElementById('bm-support');
   sel.innerHTML='<option value="">Select support person</option>';
@@ -1166,6 +1175,37 @@ function openBookingModal(slot, blockedMap){
   if(freeSupport.length===0){
     sel.innerHTML='<option value="">No support persons available</option>';
   }
+
+  // Admin: show "Book for" dropdown populated with all non-admin users
+  const behalfWrap=document.getElementById('bm-behalf-wrap');
+  const pendingNote=document.getElementById('bm-pending-note');
+  const confirmBtn=document.getElementById('bm-confirm');
+  if(currentIsAdmin){
+    behalfWrap.style.display='block';
+    const behalfSel=document.getElementById('bm-behalf');
+    behalfSel.innerHTML='<option value="">Select user...</option>';
+    const users=getUsers();
+    Object.keys(users).forEach(u=>{
+      if(u===currentUser) return; // skip admin themselves
+      const opt=document.createElement('option');
+      opt.value=u; opt.textContent=u+(users[u].is_admin?' (Admin)':'');
+      behalfSel.appendChild(opt);
+    });
+    // Admin bookings auto-approved — update note
+    pendingNote.style.background='#dcfce7';
+    pendingNote.style.borderColor='#bbf7d0';
+    pendingNote.style.color='#166534';
+    pendingNote.innerHTML='✅ Admin booking — will be <b>auto-approved</b> instantly.';
+    confirmBtn.textContent='Book slot';
+  } else {
+    behalfWrap.style.display='none';
+    pendingNote.style.background='#fef9c3';
+    pendingNote.style.borderColor='#fde68a';
+    pendingNote.style.color='#92400e';
+    pendingNote.innerHTML='⏳ Slot will be <b>pending admin approval</b> after booking.';
+    confirmBtn.textContent='Request slot';
+  }
+
   showModalOnly('bookingModal');
 }
 
@@ -1209,19 +1249,41 @@ async function confirmBooking(){
     alert(`${support} is already busy during this time window. Please choose a different support person or adjust the duration.`);return;
   }
 
-  // Unique key: time + support person (allows multiple bookings at same time with different support)
+  // Unique key: time + support person
   const bookingKey=`${pendingSlotKey}_${support.replace(/\s+/g,'_')}`;
   if(slots[bookingKey]){alert('This booking already exists.');return;}
+
+  // Determine who the slot is booked FOR
+  const behalfUser=currentIsAdmin
+    ? (document.getElementById('bm-behalf').value||currentUser)
+    : currentUser;
+
+  // Admin bookings are auto-approved; user bookings are pending
+  const bookingStatus = currentIsAdmin ? 'approved' : 'pending';
 
   // Save to Supabase
   const {error:insertErr}=await sb.from('bookings').insert({
     id:bookingKey, time_key:pendingSlotKey,
-    booked_by:currentUser, company, round, support, duration, status:'pending'
+    booked_by:behalfUser, company, round, support, duration, status:bookingStatus
   });
   if(insertErr){ alert('Booking failed: '+insertErr.message); return; }
+
   // Update local cache
-  slots[bookingKey]={_key:pendingSlotKey,bookedBy:currentUser,company,round,support,duration,status:'pending',bookedAt:new Date().toISOString()};
+  slots[bookingKey]={_key:pendingSlotKey,bookedBy:behalfUser,company,round,support,duration,status:bookingStatus,bookedAt:new Date().toISOString()};
   _cache.slots=slots;
+
+  // Notify if admin booked on behalf of someone
+  if(currentIsAdmin && behalfUser !== currentUser){
+    showNotif('Slot booked for '+behalfUser,
+      'A slot at '+pendingSlotKey.split('_')[1]+' has been booked and approved for '+behalfUser+'.','approved');
+    // Store notification for the user to see on next login
+    const notifKey='lc_notif_'+behalfUser;
+    const seen=JSON.parse(localStorage.getItem(notifKey)||'{}');
+    seen[bookingKey+'_approved']=true;
+    seen[bookingKey+'_admin_booked']=true;
+    localStorage.setItem(notifKey,JSON.stringify(seen));
+  }
+
   closeModal();renderSlots();renderAdminSection();renderMySlotBanner();startCountdown();
 }
 
@@ -1319,18 +1381,27 @@ function checkSlotNotifications(){
   const notifKey='lc_notif_'+currentUser;
   const seen=JSON.parse(localStorage.getItem(notifKey)||'{}');
   let approvedCount=0,rejectedCount=0;
+  let adminBookedCount=0;
   Object.keys(slots).forEach(key=>{
     const b=slots[key];
     if(b.bookedBy!==currentUser)return;
     if(b.status==='approved'&&!seen[key+'_approved']){
-      approvedCount++;seen[key+'_approved']=true;
+      // Check if this was admin-booked (already approved from the start)
+      if(!seen[key+'_admin_booked']){
+        approvedCount++;
+      } else {
+        adminBookedCount++;
+      }
+      seen[key+'_approved']=true;
     }
     if(b.status==='rejected'&&!seen[key+'_rejected']){
       rejectedCount++;seen[key+'_rejected']=true;
     }
   });
   localStorage.setItem(notifKey,JSON.stringify(seen));
-  if(approvedCount>0&&rejectedCount===0){
+  if(adminBookedCount>0){
+    showNotif('Slot booked for you! 🎉','Admin has booked and approved '+adminBookedCount+' slot(s) for you. All the best for your interview!','approved');
+  } else if(approvedCount>0&&rejectedCount===0){
     showNotif('Slot Approved! 🎉',approvedCount+' of your slot(s) have been approved. All the best for your interview!','approved');
   } else if(rejectedCount>0&&approvedCount===0){
     showNotif('Slot Rejected',rejectedCount+' of your slot(s) were rejected. Please book a new slot.','rejected');
