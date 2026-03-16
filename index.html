@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>LoginCheck</title>
-
-  <!-- PWA Meta Tags -->
   <meta name="application-name" content="LoginCheck">
   <meta name="description" content="Secure identity verification portal">
   <meta name="theme-color" content="#1a1a2e">
@@ -13,266 +11,127 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LoginCheck">
-
-  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
-
-  <!-- Apple Touch Icons -->
   <link rel="apple-touch-icon" href="icon-192.png">
-
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { font-family: 'Inter', sans-serif; background: #f5f3ef; min-height: 100vh; min-height: -webkit-fill-available; }
-    html { height: -webkit-fill-available; }
-
-    .page { display: none; min-height: 100vh; min-height: -webkit-fill-available; }
+    body { font-family: 'Inter', sans-serif; background: #f5f3ef; min-height: 100vh; }
+    .page { display: none; min-height: 100vh; }
     .page.active { display: flex; }
 
-    /* ── LOGIN PAGE ── */
-    #loginPage { flex-direction: row; background: #f5f3ef; }
+    /* LOGIN */
+    #loginPage { flex-direction: row; }
+    .login-left { width: 45%; background: #1a1a2e; display: flex; flex-direction: column; justify-content: space-between; padding: 52px 48px; position: relative; overflow: hidden; }
+    .login-left::before { content:''; position:absolute; width:320px; height:320px; border-radius:50%; background:radial-gradient(circle,rgba(99,102,241,.25) 0%,transparent 70%); top:-80px; left:-80px; }
+    .login-left::after { content:''; position:absolute; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle,rgba(236,72,153,.2) 0%,transparent 70%); bottom:60px; right:-60px; }
+    .brand { position:relative; z-index:1; }
+    .brand-name { font-family:'Syne',sans-serif; font-weight:800; font-size:28px; color:#fff; }
+    .brand-name span { color:#818cf8; }
+    .brand-tag { font-size:11px; color:#6366f1; letter-spacing:.18em; text-transform:uppercase; margin-top:4px; }
+    .left-body { position:relative; z-index:1; }
+    .left-headline { font-family:'Syne',sans-serif; font-size:40px; font-weight:700; color:#fff; line-height:1.15; margin-bottom:16px; }
+    .left-headline em { color:#818cf8; font-style:normal; }
+    .left-sub { font-size:13px; color:#64748b; line-height:1.7; }
+    .left-footer { font-size:11px; color:#334155; position:relative; z-index:1; }
+    .login-right { width:55%; display:flex; align-items:center; justify-content:center; padding:48px 32px; }
+    .login-form-wrap { width:100%; max-width:380px; }
+    .form-title { font-family:'Syne',sans-serif; font-size:28px; font-weight:700; color:#0f172a; margin-bottom:6px; }
+    .form-sub { font-size:13px; color:#94a3b8; margin-bottom:36px; }
 
-    .login-left {
-      width: 45%;
-      background: #1a1a2e;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 52px 48px;
-      position: relative;
-      overflow: hidden;
-    }
-    .login-left::before {
-      content: '';
-      position: absolute;
-      width: 320px; height: 320px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, transparent 70%);
-      top: -80px; left: -80px;
-    }
-    .login-left::after {
-      content: '';
-      position: absolute;
-      width: 240px; height: 240px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(236,72,153,0.2) 0%, transparent 70%);
-      bottom: 60px; right: -60px;
-    }
-    .brand { position: relative; z-index: 1; }
-    .brand-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: #fff; letter-spacing: -0.5px; }
-    .brand-name span { color: #818cf8; }
-    .brand-tag { font-size: 11px; color: #6366f1; letter-spacing: 0.18em; text-transform: uppercase; margin-top: 4px; }
-    .left-body { position: relative; z-index: 1; }
-    .left-headline { font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 16px; }
-    .left-headline em { color: #818cf8; font-style: normal; }
-    .left-sub { font-size: 13px; color: #64748b; line-height: 1.7; }
-    .left-footer { font-size: 11px; color: #334155; position: relative; z-index: 1; }
+    .field { margin-bottom:20px; }
+    .field label { display:block; font-size:11px; font-weight:500; letter-spacing:.12em; text-transform:uppercase; color:#64748b; margin-bottom:8px; }
+    .field input { width:100%; background:#fff; border:1.5px solid #e2e8f0; border-radius:10px; color:#0f172a; font-family:'Inter',sans-serif; font-size:16px; padding:14px 16px; outline:none; transition:border-color .2s,box-shadow .2s; }
+    .field input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+    .field input.err { border-color:#f43f5e; box-shadow:0 0 0 3px rgba(244,63,94,.08); }
+    .field input.ok { border-color:#10b981; }
 
-    .login-right {
-      width: 55%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 32px;
-    }
-    .login-form-wrap { width: 100%; max-width: 380px; }
-    .form-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
-    .form-sub { font-size: 13px; color: #94a3b8; margin-bottom: 36px; }
+    .hint { font-size:11px; margin-top:6px; min-height:14px; color:#94a3b8; }
+    .hint.e { color:#f43f5e; }
+    .hint.s { color:#10b981; }
+    .hint.w { color:#f59e0b; }
 
-    .field { margin-bottom: 20px; }
-    .field label { display: block; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
-    .field input {
-      width: 100%;
-      background: #fff;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 10px;
-      color: #0f172a;
-      font-family: 'Inter', sans-serif;
-      font-size: 16px;
-      padding: 14px 16px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-    .field input.err { border-color: #f43f5e; box-shadow: 0 0 0 3px rgba(244,63,94,0.08); }
-    .field input.ok { border-color: #10b981; }
+    .suggest-panel { display:none; margin-top:8px; background:#fffbeb; border:1px solid #fde68a; border-left:3px solid #f59e0b; border-radius:8px; padding:10px 12px; font-size:11px; color:#78350f; line-height:1.7; animation:popIn .2s ease; }
+    .suggest-panel.show { display:block; }
+    .suggest-panel .sp-title { font-weight:600; color:#b45309; margin-bottom:6px; font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+    .suggest-panel .sp-msg { margin-bottom:8px; color:#92400e; }
+    .chips { display:flex; flex-wrap:wrap; gap:4px; }
+    .chip { background:#fef3c7; border:1px solid #fde68a; border-radius:6px; padding:4px 10px; font-size:13px; color:#92400e; cursor:pointer; font-family:'Inter',monospace; font-weight:500; transition:background .15s; }
+    .chip:hover,.chip:active { background:#fde68a; }
 
-    .hint { font-size: 11px; margin-top: 6px; min-height: 14px; color: #94a3b8; }
-    .hint.e { color: #f43f5e; }
-    .hint.s { color: #10b981; }
-    .hint.w { color: #f59e0b; }
+    .error-banner { display:none; background:#fff1f2; border:1px solid #fecdd3; border-left:3px solid #f43f5e; border-radius:8px; padding:12px 14px; font-size:12px; color:#be123c; margin-bottom:20px; animation:popIn .2s ease; }
+    .error-banner.show { display:flex; align-items:center; gap:8px; }
 
-    .suggest-panel {
-      display: none;
-      margin-top: 8px;
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-left: 3px solid #f59e0b;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 11px;
-      color: #78350f;
-      line-height: 1.7;
-      animation: popIn 0.2s ease;
-    }
-    .suggest-panel.show { display: block; }
-    .suggest-panel .sp-title { font-weight: 600; color: #b45309; margin-bottom: 6px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
-    .suggest-panel .sp-msg { margin-bottom: 8px; color: #92400e; }
-    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
-    .chip {
-      background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px;
-      padding: 4px 10px; font-size: 13px; color: #92400e; cursor: pointer;
-      font-family: 'Inter', monospace; font-weight: 500;
-      transition: background 0.15s;
-    }
-    .chip:hover, .chip:active { background: #fde68a; }
+    .login-btn { width:100%; padding:15px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-family:'Syne',sans-serif; font-size:15px; font-weight:700; letter-spacing:.05em; cursor:pointer; transition:background .2s,transform .1s,box-shadow .2s; box-shadow:0 4px 14px rgba(99,102,241,.35); margin-top:8px; touch-action:manipulation; }
+    .login-btn:hover { background:#4f46e5; }
+    .login-btn:active { transform:scale(.99); }
+    .login-btn:disabled { background:#e2e8f0; color:#94a3b8; box-shadow:none; cursor:not-allowed; }
+    .forgot-link { background:none; border:none; color:#6366f1; font-size:12px; font-family:'Inter',sans-serif; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:0; transition:color .2s; }
+    .forgot-link:hover { color:#4f46e5; }
 
-    .error-banner {
-      display: none;
-      background: #fff1f2;
-      border: 1px solid #fecdd3;
-      border-left: 3px solid #f43f5e;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 12px;
-      color: #be123c;
-      margin-bottom: 20px;
-      animation: popIn 0.2s ease;
-    }
-    .error-banner.show { display: flex; align-items: center; gap: 8px; }
+    /* MODAL */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); backdrop-filter:blur(4px); z-index:100; animation:fadeIn .2s ease; }
+    .modal-overlay.show { display:block; }
+    .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:16px; padding:32px; width:90%; max-width:420px; box-shadow:0 24px 64px rgba(0,0,0,.15); z-index:101; animation:popIn .25s ease; }
+    .modal.show { display:block; }
+    .modal-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:#0f172a; margin-bottom:4px; }
+    .modal-sub { font-size:13px; color:#94a3b8; line-height:1.6; }
+    .modal-actions { display:flex; gap:10px; margin-top:24px; }
+    .modal-btn { flex:1; padding:12px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:background .2s; touch-action:manipulation; }
+    .modal-btn:hover { background:#4f46e5; }
+    .modal-btn:disabled { background:#e2e8f0; color:#94a3b8; cursor:not-allowed; }
+    .modal-btn-outline { flex:1; padding:12px; background:none; border:1.5px solid #e2e8f0; border-radius:10px; font-family:'Inter',sans-serif; font-size:13px; color:#64748b; cursor:pointer; transition:all .2s; }
+    .modal-btn-outline:hover { border-color:#cbd5e1; background:#f8fafc; }
+    .success-icon { width:60px; height:60px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:28px; color:#16a34a; }
+    .step-badge { display:inline-block; background:#ede9fe; color:#7c3aed; font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; padding:3px 10px; border-radius:100px; margin-bottom:12px; }
 
-    .login-btn {
-      width: 100%; padding: 15px;
-      background: #6366f1; color: #fff;
-      border: none; border-radius: 10px;
-      font-family: 'Syne', sans-serif;
-      font-size: 15px; font-weight: 700;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-      box-shadow: 0 4px 14px rgba(99,102,241,0.35);
-      margin-top: 8px;
-      touch-action: manipulation;
-    }
-    .login-btn:hover { background: #4f46e5; }
-    .login-btn:active { transform: scale(0.99); background: #4338ca; }
-    .login-btn:disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; cursor: not-allowed; }
+    /* HOME */
+    #homePage { flex-direction:column; }
+    .navbar { display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:#fff; border-bottom:1px solid #e2e8f0; }
+    .nav-brand { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:#0f172a; }
+    .nav-brand span { color:#6366f1; }
+    .nav-user { display:flex; align-items:center; gap:10px; }
+    .nav-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#ec4899); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:700; font-size:14px; color:#fff; }
+    .nav-name { font-size:13px; font-weight:500; color:#334155; }
+    .logout-btn { background:none; border:1.5px solid #e2e8f0; border-radius:8px; padding:6px 14px; font-size:12px; font-family:'Inter',sans-serif; color:#64748b; cursor:pointer; transition:all .2s; margin-left:12px; }
+    .logout-btn:hover { background:#f8fafc; border-color:#cbd5e1; color:#0f172a; }
+    .home-body { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 24px; text-align:center; }
+    .welcome-chip { display:inline-block; background:#ede9fe; color:#7c3aed; font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; padding:5px 16px; border-radius:100px; margin-bottom:24px; animation:popIn .5s ease; }
+    .welcome-heading { font-family:'Syne',sans-serif; font-size:52px; font-weight:800; color:#0f172a; line-height:1.1; margin-bottom:16px; animation:popIn .5s ease .1s both; }
+    .username-highlight { background:linear-gradient(135deg,#6366f1,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .welcome-sub { font-size:15px; color:#64748b; line-height:1.7; max-width:420px; animation:popIn .5s ease .2s both; }
+    .welcome-card { margin-top:48px; background:#fff; border-radius:16px; border:1px solid #e2e8f0; padding:28px 36px; display:flex; gap:32px; box-shadow:0 4px 24px rgba(0,0,0,.06); animation:popIn .5s ease .3s both; }
+    .stat { text-align:center; }
+    .stat-val { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:#6366f1; }
+    .stat-label { font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:.12em; margin-top:2px; }
+    .divider-v { width:1px; background:#e2e8f0; }
 
-    /* Install banner */
-    .install-banner {
-      display: none;
-      position: fixed;
-      bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: #1a1a2e; color: #fff;
-      border-radius: 12px; padding: 12px 20px;
-      font-size: 13px; gap: 12px;
-      align-items: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      z-index: 999; max-width: 340px; width: 90%;
-      animation: slideUp 0.3s ease;
-    }
-    .install-banner.show { display: flex; }
-    .install-btn { background: #6366f1; border: none; color: #fff; border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: 'Inter', sans-serif; }
-    .install-dismiss { background: none; border: none; color: #64748b; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 4px; }
+    .install-banner { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; border-radius:12px; padding:12px 20px; font-size:13px; gap:12px; align-items:center; box-shadow:0 8px 32px rgba(0,0,0,.3); z-index:999; max-width:340px; width:90%; animation:slideUp .3s ease; }
+    .install-banner.show { display:flex; }
+    .install-btn { background:#6366f1; border:none; color:#fff; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; font-family:'Inter',sans-serif; }
+    .install-dismiss { background:none; border:none; color:#64748b; cursor:pointer; font-size:18px; line-height:1; padding:0 4px; }
 
     @keyframes popIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
     @keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-    @keyframes shakeX {
-      0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)}
-      40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
-    }
+    @keyframes shakeX { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
 
-    /* ── HOME PAGE ── */
-    #homePage { flex-direction: column; background: #f5f3ef; }
-
-    .navbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 48px;
-      background: #fff;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .nav-brand { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #0f172a; }
-    .nav-brand span { color: #6366f1; }
-    .nav-user { display: flex; align-items: center; gap: 10px; }
-    .nav-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #ec4899);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: #fff;
-    }
-    .nav-name { font-size: 13px; font-weight: 500; color: #334155; }
-    .logout-btn {
-      background: none; border: 1.5px solid #e2e8f0; border-radius: 8px;
-      padding: 6px 14px; font-size: 12px; font-family: 'Inter', sans-serif;
-      color: #64748b; cursor: pointer; transition: all 0.2s; margin-left: 12px;
-      touch-action: manipulation;
-    }
-    .logout-btn:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
-
-    .home-body {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 60px 24px; text-align: center;
-    }
-    .welcome-chip {
-      display: inline-block;
-      background: #ede9fe; color: #7c3aed;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.16em; text-transform: uppercase;
-      padding: 5px 16px; border-radius: 100px;
-      margin-bottom: 24px;
-      animation: popIn 0.5s ease;
-    }
-    .welcome-heading {
-      font-family: 'Syne', sans-serif;
-      font-size: 52px; font-weight: 800;
-      color: #0f172a; line-height: 1.1;
-      margin-bottom: 16px;
-      animation: popIn 0.5s ease 0.1s both;
-    }
-    .welcome-heading .username-highlight {
-      background: linear-gradient(135deg, #6366f1, #ec4899);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .welcome-sub {
-      font-size: 15px; color: #64748b; line-height: 1.7; max-width: 420px;
-      animation: popIn 0.5s ease 0.2s both;
-    }
-    .welcome-card {
-      margin-top: 48px;
-      background: #fff; border-radius: 16px;
-      border: 1px solid #e2e8f0;
-      padding: 28px 36px;
-      display: flex; gap: 32px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-      animation: popIn 0.5s ease 0.3s both;
-    }
-    .stat { text-align: center; }
-    .stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: #6366f1; }
-    .stat-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin-top: 2px; }
-    .divider-v { width: 1px; background: #e2e8f0; }
-
-    /* ── RESPONSIVE / MOBILE ── */
-    @media (max-width: 640px) {
-      #loginPage { flex-direction: column; }
-      .login-left { width: 100%; padding: 32px 24px 28px; min-height: auto; }
-      .left-headline { font-size: 26px; margin-bottom: 10px; }
-      .left-sub { display: none; }
-      .left-footer { display: none; }
-      .login-right { width: 100%; padding: 28px 20px 40px; align-items: flex-start; }
-      .login-form-wrap { max-width: 100%; }
-      .form-title { font-size: 22px; }
-      .form-sub { margin-bottom: 24px; }
-      .welcome-heading { font-size: 32px; }
-      .navbar { padding: 14px 20px; }
-      .nav-name { display: none; }
-      .welcome-card { flex-direction: column; gap: 16px; padding: 20px 24px; }
-      .divider-v { width: 100%; height: 1px; }
-      .home-body { padding: 40px 20px; }
-      .welcome-sub { font-size: 14px; }
+    @media (max-width:640px) {
+      #loginPage { flex-direction:column; }
+      .login-left { width:100%; padding:32px 24px 28px; min-height:auto; }
+      .left-headline { font-size:26px; margin-bottom:10px; }
+      .left-sub,.left-footer { display:none; }
+      .login-right { width:100%; padding:28px 20px 40px; align-items:flex-start; }
+      .login-form-wrap { max-width:100%; }
+      .form-title { font-size:22px; }
+      .form-sub { margin-bottom:24px; }
+      .welcome-heading { font-size:32px; }
+      .navbar { padding:14px 20px; }
+      .nav-name { display:none; }
+      .welcome-card { flex-direction:column; gap:16px; padding:20px 24px; }
+      .divider-v { width:100%; height:1px; }
+      .home-body { padding:40px 20px; }
+      .modal { padding:24px 20px; }
     }
   </style>
 </head>
@@ -291,24 +150,17 @@
     </div>
     <div class="left-footer">© 2026 LoginCheck · All rights reserved</div>
   </div>
-
   <div class="login-right">
     <div class="login-form-wrap">
       <div class="form-title">Welcome back</div>
       <div class="form-sub">Sign in to your account to continue</div>
-
       <div class="error-banner" id="authError">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f43f5e" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span id="authErrorMsg">Invalid credentials. Access denied.</span>
       </div>
-
       <div class="field">
         <label>Username</label>
-        <input type="text" id="username" placeholder="Enter username" autocomplete="off"
-          autocapitalize="characters" spellcheck="false"
-          oninput="handleUser(event)" onkeydown="interceptUser(event)">
+        <input type="text" id="username" placeholder="Enter username" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="handleUser(event)" onkeydown="interceptUser(event)">
         <div class="hint" id="u-hint">Capital letters only (A–Z)</div>
         <div class="suggest-panel" id="u-suggest">
           <div class="sp-title">Invalid character</div>
@@ -316,12 +168,9 @@
           <div class="chips" id="u-chips"></div>
         </div>
       </div>
-
       <div class="field">
         <label>Password</label>
-        <input type="password" id="password" placeholder="Enter password" autocomplete="off"
-          spellcheck="false"
-          oninput="handlePass(event)" onkeydown="interceptPass(event)">
+        <input type="password" id="password" placeholder="Enter password" autocomplete="off" spellcheck="false" oninput="handlePass(event)" onkeydown="interceptPassField(event,'password','p-hint','p-suggest','p-msg','p-chips')">
         <div class="hint" id="p-hint">Letters only (a–z, A–Z)</div>
         <div class="suggest-panel" id="p-suggest">
           <div class="sp-title">Invalid character</div>
@@ -329,8 +178,10 @@
           <div class="chips" id="p-chips"></div>
         </div>
       </div>
-
       <button class="login-btn" id="loginBtn" onclick="doLogin()" disabled>Sign In</button>
+      <div style="text-align:center;margin-top:16px">
+        <button class="forgot-link" onclick="showForgot()">Forgot password?</button>
+      </div>
     </div>
   </div>
 </div>
@@ -359,179 +210,335 @@
   </div>
 </div>
 
-<!-- PWA Install Banner -->
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeForgot()"></div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div class="modal" id="forgotModal">
+
+  <!-- STEP 1: Username -->
+  <div id="step1">
+    <div class="step-badge">Step 1 of 3</div>
+    <div class="modal-title">Reset password</div>
+    <div class="modal-sub">Enter your username to begin</div>
+    <div class="field" style="margin-top:20px">
+      <label>Username</label>
+      <input type="text" id="resetUser" placeholder="Enter username" autocomplete="off" autocapitalize="characters" spellcheck="false" oninput="handleResetUser(this)">
+      <div class="hint" id="ru-hint">Capital letters only (A–Z)</div>
+    </div>
+    <div class="error-banner" id="resetUserError" style="margin-bottom:0">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>User not found. Only registered users can reset.</span>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-outline" onclick="closeForgot()">Cancel</button>
+      <button class="modal-btn" id="step1Btn" onclick="goStep2()" disabled>Continue</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Security Question -->
+  <div id="step2" style="display:none">
+    <div class="step-badge">Step 2 of 3</div>
+    <div class="modal-title">Security question</div>
+    <div class="modal-sub" id="secQuestion" style="color:#0f172a;font-size:14px;font-weight:500;margin-top:6px"></div>
+    <div class="field" style="margin-top:20px">
+      <label>Your answer</label>
+      <input type="text" id="secAnswer" placeholder="Type your answer" autocomplete="off" spellcheck="false" oninput="handleAnswer(this)">
+      <div class="hint" id="sa-hint">Not case sensitive</div>
+    </div>
+    <div class="error-banner" id="secAnswerError" style="margin-bottom:0">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f43f5e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Incorrect answer. Please try again.</span>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-outline" onclick="showStep('step1')">Back</button>
+      <button class="modal-btn" id="step2Btn" onclick="goStep3()" disabled>Verify</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: New Password -->
+  <div id="step3" style="display:none">
+    <div class="step-badge">Step 3 of 3</div>
+    <div class="modal-title">New password</div>
+    <div class="modal-sub">Letters only — no numbers or symbols</div>
+    <div class="field" style="margin-top:20px">
+      <label>New password</label>
+      <input type="password" id="newPass" placeholder="Enter new password" autocomplete="off" spellcheck="false" oninput="handleNewPass()" onkeydown="interceptPassField(event,'newPass','np-hint',null,null,null)">
+      <div class="hint" id="np-hint">Letters only · min 4 characters</div>
+    </div>
+    <div class="field">
+      <label>Confirm password</label>
+      <input type="password" id="confirmPass" placeholder="Repeat new password" autocomplete="off" spellcheck="false" oninput="handleNewPass()" onkeydown="interceptPassField(event,'confirmPass','cp-hint',null,null,null)">
+      <div class="hint" id="cp-hint">Must match new password</div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-outline" onclick="closeForgot()">Cancel</button>
+      <button class="modal-btn" id="step3Btn" onclick="doReset()" disabled>Reset Password</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Success -->
+  <div id="step4" style="display:none;text-align:center">
+    <div class="success-icon">✓</div>
+    <div class="modal-title">Password updated!</div>
+    <div class="modal-sub" style="margin-top:8px">Your password has been reset. You can now sign in with your new password.</div>
+    <div class="modal-actions" style="margin-top:28px">
+      <button class="modal-btn" onclick="closeForgot()">Back to login</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- PWA INSTALL BANNER -->
 <div class="install-banner" id="installBanner">
-  <span>📲 Install LoginCheck on your device</span>
+  <span>📲 Install LoginCheck</span>
   <button class="install-btn" onclick="installApp()">Install</button>
   <button class="install-dismiss" onclick="dismissInstall()">×</button>
 </div>
 
 <script>
-  const USERS = { DADDY: 'tell', MOMMY: 'happy' };
+  // SHA-256 hashed passwords — DADDY='tell', MOMMY='happy'
+  const USERS = {
+    DADDY: '879915cfdc2cb4852ed05241911d8de5ca6e2cc4085746c14f13ad304157e264',
+    MOMMY: '489f719cadf919094ddb38e7654de153ac33c02febb5de91e5345cbe372cf4a0'
+  };
+
+  // Security Q&A — answers hashed (lowercase): DADDY='blue', MOMMY='london'
+  const SECURITY = {
+    DADDY: { question: 'What is your favourite colour?',  hash: '16477688c0e00699c6cfa4497a3612d7e83c532062b64b250fed8908128ed548' },
+    MOMMY: { question: 'What city were you born in?',     hash: '6089854c94ca5454b76be6752c562901a985f64c9a946f62976aeab593b83161' }
+  };
+
+  // Runtime overrides after password reset (in-memory only)
+  const runtimePwd = {};
+
   const CAPS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const LTRS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  let resetUser = '';
 
-  // PWA Install prompt
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    setTimeout(() => document.getElementById('installBanner').classList.add('show'), 2000);
-  });
-
-  function installApp() {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => {
-        deferredPrompt = null;
-        dismissInstall();
-      });
-    }
-  }
-
-  function dismissInstall() {
-    document.getElementById('installBanner').classList.remove('show');
-  }
-
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
 
   function shake(id) {
     const el = document.getElementById(id);
     el.style.animation = 'none'; el.offsetHeight;
-    el.style.animation = 'shakeX 0.35s ease';
+    el.style.animation = 'shakeX .35s ease';
     setTimeout(() => el.style.animation = '', 400);
   }
 
   function setHint(id, msg, type) {
     const el = document.getElementById(id);
-    el.textContent = msg;
-    el.className = 'hint ' + (type || '');
+    if (!el) return;
+    el.textContent = msg; el.className = 'hint ' + (type||'');
   }
 
-  function showSuggest(suggestId, msgId, chipsId, msg, chars, inputId) {
-    document.getElementById(msgId).innerHTML = msg;
-    const cd = document.getElementById(chipsId);
-    cd.innerHTML = '';
-    chars.slice(0, 18).forEach(c => {
+  function showSuggest(sId, mId, cId, msg, chars, inputId) {
+    if (!sId) return;
+    document.getElementById(mId).innerHTML = msg;
+    const cd = document.getElementById(cId); cd.innerHTML = '';
+    chars.slice(0,18).forEach(c => {
       const ch = document.createElement('span');
       ch.className = 'chip'; ch.textContent = c;
-      ch.onclick = () => {
-        const inp = document.getElementById(inputId);
-        inp.value += c;
-        inp.dispatchEvent(new Event('input'));
-        hideSuggest(suggestId);
-      };
+      ch.onclick = () => { document.getElementById(inputId).value += c; document.getElementById(inputId).dispatchEvent(new Event('input')); document.getElementById(sId).classList.remove('show'); };
       cd.appendChild(ch);
     });
-    document.getElementById(suggestId).classList.add('show');
+    document.getElementById(sId).classList.add('show');
   }
 
-  function hideSuggest(id) { document.getElementById(id).classList.remove('show'); }
-
   function interceptUser(e) {
-    if ((e.ctrlKey || e.metaKey) || e.key.length !== 1) return;
+    if ((e.ctrlKey||e.metaKey) || e.key.length!==1) return;
     if (!/^[A-Z]$/.test(e.key)) {
-      e.preventDefault();
-      shake('username');
+      e.preventDefault(); shake('username');
       const sugg = /^[a-z]$/.test(e.key) ? e.key.toUpperCase() : null;
-      const msg = sugg
-        ? `You typed <b>"${e.key}"</b> — try <b>"${sugg}"</b> instead. Username requires capital letters A–Z only.`
-        : `<b>"${e.key}"</b> is not allowed. Use capital letters A–Z only.`;
       setHint('u-hint', `"${e.key}" not allowed here`, 'w');
-      const list = sugg ? [sugg, ...CAPS.filter(c => c !== sugg)] : CAPS;
-      showSuggest('u-suggest', 'u-msg', 'u-chips', msg, list, 'username');
+      showSuggest('u-suggest','u-msg','u-chips',
+        sugg ? `You typed <b>"${e.key}"</b> — try <b>"${sugg}"</b>. Capitals only.` : `<b>"${e.key}"</b> not allowed. Use A–Z only.`,
+        sugg ? [sugg,...CAPS.filter(c=>c!==sugg)] : CAPS, 'username');
     }
   }
 
-  function interceptPass(e) {
-    if ((e.ctrlKey || e.metaKey) || e.key.length !== 1) return;
+  function interceptPassField(e, fieldId, hintId, sId, mId, cId) {
+    if ((e.ctrlKey||e.metaKey) || e.key.length!==1) return;
     if (!/^[a-zA-Z]$/.test(e.key)) {
-      e.preventDefault();
-      shake('password');
-      const msg = `<b>"${e.key}"</b> is not allowed. Password accepts letters only (a–z, A–Z) — no numbers or symbols.`;
-      setHint('p-hint', `"${e.key}" not allowed here`, 'w');
-      showSuggest('p-suggest', 'p-msg', 'p-chips', msg, LTRS, 'password');
+      e.preventDefault(); shake(fieldId);
+      setHint(hintId, `"${e.key}" not allowed — letters only`, 'w');
+      if (sId) showSuggest(sId, mId, cId, `<b>"${e.key}"</b> not allowed. Letters only (a–z, A–Z).`, LTRS, fieldId);
     }
   }
 
   function handleUser(e) {
-    const inp = e.target;
-    const clean = inp.value.replace(/[^A-Z]/g, '');
-    if (inp.value !== clean) inp.value = clean;
-    hideSuggest('u-suggest');
+    const inp = e.target, clean = inp.value.replace(/[^A-Z]/g,'');
+    if (inp.value!==clean) inp.value = clean;
+    document.getElementById('u-suggest').classList.remove('show');
     document.getElementById('authError').classList.remove('show');
-    if (!clean) { inp.className = ''; setHint('u-hint', 'Capital letters only (A–Z)', ''); }
-    else if (clean.length < 3) { inp.className = 'err'; setHint('u-hint', `Need ${3 - clean.length} more character(s)`, 'e'); }
-    else { inp.className = 'ok'; setHint('u-hint', `${clean.length} characters — valid`, 's'); }
+    if (!clean) { inp.className=''; setHint('u-hint','Capital letters only (A–Z)',''); }
+    else if (clean.length<3) { inp.className='err'; setHint('u-hint',`Need ${3-clean.length} more character(s)`,'e'); }
+    else { inp.className='ok'; setHint('u-hint',`${clean.length} characters — valid`,'s'); }
     checkForm();
   }
 
   function handlePass(e) {
-    const inp = e.target;
-    const clean = inp.value.replace(/[^a-zA-Z]/g, '');
-    if (inp.value !== clean) inp.value = clean;
-    hideSuggest('p-suggest');
+    const inp = e.target, clean = inp.value.replace(/[^a-zA-Z]/g,'');
+    if (inp.value!==clean) inp.value = clean;
+    document.getElementById('p-suggest').classList.remove('show');
     document.getElementById('authError').classList.remove('show');
-    if (!clean) { inp.className = ''; setHint('p-hint', 'Letters only (a–z, A–Z)', ''); }
-    else if (clean.length < 3) { inp.className = 'err'; setHint('p-hint', `Need ${3 - clean.length} more character(s)`, 'e'); }
-    else { inp.className = 'ok'; setHint('p-hint', `${clean.length} characters — valid`, 's'); }
+    if (!clean) { inp.className=''; setHint('p-hint','Letters only (a–z, A–Z)',''); }
+    else if (clean.length<3) { inp.className='err'; setHint('p-hint',`Need ${3-clean.length} more character(s)`,'e'); }
+    else { inp.className='ok'; setHint('p-hint',`${clean.length} characters — valid`,'s'); }
     checkForm();
   }
 
   function checkForm() {
     const u = document.getElementById('username').value;
     const p = document.getElementById('password').value;
-    document.getElementById('loginBtn').disabled = !(u.length >= 3 && p.length >= 3);
+    document.getElementById('loginBtn').disabled = !(u.length>=3 && p.length>=3);
   }
 
-  function doLogin() {
+  async function doLogin() {
     const u = document.getElementById('username').value;
     const p = document.getElementById('password').value;
-    const banner = document.getElementById('authError');
-    if (USERS[u] && USERS[u] === p) {
-      banner.classList.remove('show');
-      const now = new Date();
-      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const btn = document.getElementById('loginBtn');
+    btn.textContent = 'Verifying...'; btn.disabled = true;
+    const hashed = await sha256(p);
+    const expected = runtimePwd[u] || USERS[u];
+    if (expected && expected === hashed) {
+      document.getElementById('authError').classList.remove('show');
+      const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       document.getElementById('welcomeName').textContent = u;
       document.getElementById('navName').textContent = u;
       document.getElementById('avatarInitial').textContent = u[0];
       document.getElementById('statTime').textContent = time;
-      const subs = {
-        DADDY: 'Great to have you back. Your access has been verified and your session is active.',
-        MOMMY: 'Welcome home! You have been successfully authenticated and granted full access.'
-      };
-      document.getElementById('welcomeSub').textContent = subs[u];
+      document.getElementById('welcomeSub').textContent = u==='DADDY'
+        ? 'Great to have you back. Your access has been verified and your session is active.'
+        : 'Welcome home! You have been successfully authenticated and granted full access.';
       document.getElementById('loginPage').classList.remove('active');
       document.getElementById('homePage').classList.add('active');
     } else {
-      const isValidUser = !!USERS[u];
-      document.getElementById('authErrorMsg').textContent = isValidUser
+      document.getElementById('authErrorMsg').textContent = USERS[u]
         ? 'Incorrect password. Please try again.'
         : 'User not recognized. Only authorized users may access this system.';
-      banner.classList.add('show');
+      document.getElementById('authError').classList.add('show');
       shake('password');
       document.getElementById('password').className = 'err';
-      setHint('p-hint', 'Incorrect — check your password', 'e');
+      setHint('p-hint','Incorrect — check your password','e');
     }
+    btn.textContent = 'Sign In'; checkForm();
   }
 
   function doLogout() {
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
-    document.getElementById('username').className = '';
-    document.getElementById('password').className = '';
-    setHint('u-hint', 'Capital letters only (A–Z)', '');
-    setHint('p-hint', 'Letters only (a–z, A–Z)', '');
+    ['username','password'].forEach(id => { document.getElementById(id).value=''; document.getElementById(id).className=''; });
+    setHint('u-hint','Capital letters only (A–Z)','');
+    setHint('p-hint','Letters only (a–z, A–Z)','');
     document.getElementById('authError').classList.remove('show');
     document.getElementById('loginBtn').disabled = true;
     document.getElementById('homePage').classList.remove('active');
     document.getElementById('loginPage').classList.add('active');
   }
+
+  // ── FORGOT PASSWORD ──
+  function showForgot() {
+    document.getElementById('modalOverlay').classList.add('show');
+    document.getElementById('forgotModal').classList.add('show');
+    showStep('step1');
+    document.getElementById('resetUser').value = '';
+    document.getElementById('resetUser').className = '';
+    setHint('ru-hint','Capital letters only (A–Z)','');
+    document.getElementById('resetUserError').classList.remove('show');
+    document.getElementById('step1Btn').disabled = true;
+  }
+
+  function closeForgot() {
+    document.getElementById('modalOverlay').classList.remove('show');
+    document.getElementById('forgotModal').classList.remove('show');
+  }
+
+  function showStep(id) {
+    ['step1','step2','step3','step4'].forEach(s => {
+      document.getElementById(s).style.display = s===id ? 'block' : 'none';
+    });
+  }
+
+  function handleResetUser(inp) {
+    const clean = inp.value.replace(/[^A-Z]/g,'');
+    if (inp.value!==clean) inp.value = clean;
+    document.getElementById('resetUserError').classList.remove('show');
+    if (!clean) { inp.className=''; setHint('ru-hint','Capital letters only (A–Z)',''); }
+    else if (!USERS[clean]) { inp.className='err'; setHint('ru-hint','User not found','e'); }
+    else { inp.className='ok'; setHint('ru-hint',`Found — ${clean}`,'s'); }
+    document.getElementById('step1Btn').disabled = !USERS[clean];
+  }
+
+  function goStep2() {
+    const u = document.getElementById('resetUser').value;
+    if (!USERS[u]) { document.getElementById('resetUserError').classList.add('show'); return; }
+    resetUser = u;
+    document.getElementById('secQuestion').textContent = SECURITY[u].question;
+    document.getElementById('secAnswer').value = '';
+    document.getElementById('secAnswer').className = '';
+    setHint('sa-hint','Not case sensitive','');
+    document.getElementById('secAnswerError').classList.remove('show');
+    document.getElementById('step2Btn').disabled = true;
+    showStep('step2');
+    setTimeout(() => document.getElementById('secAnswer').focus(), 100);
+  }
+
+  function handleAnswer(inp) {
+    document.getElementById('secAnswerError').classList.remove('show');
+    inp.className = inp.value.trim().length >= 2 ? 'ok' : '';
+    document.getElementById('step2Btn').disabled = inp.value.trim().length < 2;
+  }
+
+  async function goStep3() {
+    const answer = document.getElementById('secAnswer').value.trim().toLowerCase();
+    const hashed = await sha256(answer);
+    if (hashed !== SECURITY[resetUser].hash) {
+      document.getElementById('secAnswerError').classList.add('show');
+      shake('secAnswer');
+      document.getElementById('secAnswer').className = 'err';
+      setHint('sa-hint','Incorrect answer — try again','e');
+      return;
+    }
+    document.getElementById('newPass').value = '';
+    document.getElementById('confirmPass').value = '';
+    document.getElementById('newPass').className = '';
+    document.getElementById('confirmPass').className = '';
+    setHint('np-hint','Letters only · min 4 characters','');
+    setHint('cp-hint','Must match new password','');
+    document.getElementById('step3Btn').disabled = true;
+    showStep('step3');
+    setTimeout(() => document.getElementById('newPass').focus(), 100);
+  }
+
+  function handleNewPass() {
+    const np = document.getElementById('newPass');
+    const cp = document.getElementById('confirmPass');
+    const nv = np.value.replace(/[^a-zA-Z]/g,'');
+    const cv = cp.value.replace(/[^a-zA-Z]/g,'');
+    if (np.value!==nv) np.value=nv;
+    if (cp.value!==cv) cp.value=cv;
+    if (!nv) { np.className=''; setHint('np-hint','Letters only · min 4 characters',''); }
+    else if (nv.length<4) { np.className='err'; setHint('np-hint',`Need ${4-nv.length} more character(s)`,'e'); }
+    else { np.className='ok'; setHint('np-hint',`${nv.length} characters — valid`,'s'); }
+    if (!cv) { cp.className=''; setHint('cp-hint','Must match new password',''); }
+    else if (cv!==nv) { cp.className='err'; setHint('cp-hint','Passwords do not match','e'); }
+    else { cp.className='ok'; setHint('cp-hint','Passwords match ✓','s'); }
+    document.getElementById('step3Btn').disabled = !(nv.length>=4 && nv===cv);
+  }
+
+  async function doReset() {
+    const newPass = document.getElementById('newPass').value;
+    runtimePwd[resetUser] = await sha256(newPass);
+    showStep('step4');
+  }
+
+  // PWA
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt=e; setTimeout(()=>document.getElementById('installBanner').classList.add('show'),2000); });
+  function installApp() { if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;dismissInstall();});} }
+  function dismissInstall() { document.getElementById('installBanner').classList.remove('show'); }
+  if ('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
