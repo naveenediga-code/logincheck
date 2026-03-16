@@ -863,24 +863,30 @@ async function doLogin(){
   const p=document.getElementById('password').value;
   const btn=document.getElementById('loginBtn');
   btn.textContent='Verifying...';btn.disabled=true;
-  const hashed=await sha256(p);
-  const rp=getRuntimePwd();
-  // users loaded from cache
-  const expected=rp[u]||(USERS[u]&&USERS[u].hash);
-  if(expected&&expected===hashed){
-    const lastLogins=getLastLogins();
-    const prevLogin=lastLogins[u]||null;
-    saveLastLogin(u,new Date().toISOString());
-    saveSession(u);
-    currentUser=u;
-    currentIsAdmin=getUsers()[u].is_admin||false;
-    document.getElementById('authError').classList.remove('show');
-    showHome(prevLogin);
-  } else {
-    document.getElementById('authErrorMsg').textContent=getUsers()[u]?'Incorrect password. Please try again.':'User not recognized.';
-    document.getElementById('authError').classList.add('show');
-    shake('password');document.getElementById('password').className='err';
-    setHint('p-hint','Incorrect — check your password','e');
+  try{
+    await loadAllData();
+    const hashed=await sha256(p);
+    const rp=getRuntimePwd();
+    const users=getUsers();
+    const expected=rp[u]||(users[u]&&users[u].hash);
+    if(expected&&expected===hashed){
+      const prevLogin=users[u]?.last_login||null;
+      await saveLastLogin(u,new Date().toISOString());
+      saveSession(u);
+      currentUser=u;
+      currentIsAdmin=users[u].is_admin||false;
+      document.getElementById('authError').classList.remove('show');
+      subscribeRealtime();
+      showHome(prevLogin);
+    } else {
+      document.getElementById('authErrorMsg').textContent=users[u]?'Incorrect password. Please try again.':'User not recognized.';
+      document.getElementById('authError').classList.add('show');
+      shake('password');document.getElementById('password').className='err';
+      setHint('p-hint','Incorrect — check your password','e');
+    }
+  }catch(err){
+    showError('Login failed: '+err.message);
+    console.error(err);
   }
   btn.textContent='Sign In';checkForm();
 }
